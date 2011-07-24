@@ -79,6 +79,7 @@ CPU_MODULE_DIR = cpu_module
 # use file-extension c for "c-only"-files
 SRC	= \
 $(TARGET).c \
+baseCommands.c \
 $(HW_DIR)/lib_AT91SAM7S256.c \
 $(RTOS_SRC_DIR)/tasks.c \
 $(RTOS_SRC_DIR)/queue.c \

@@ -16,6 +16,8 @@
 #include "interrupt_utils.h"
 #include "USB-CDC.h"
 #include "usart.h"
+#include "baseCommands.h"
+#include "constants.h"
 
 /*-----------------*/
 /* Clock Selection */
@@ -60,6 +62,7 @@
 #define   STARTUP  (0xc)    // This time period must be higher than 20 �s
 #define   SHTIM    (0x3)    // Must be higher than 3 ADC clock cycles but depends on output
                             // impedance of the analog driver to the ADC input
+
 
 void fatalError(int type);
 
@@ -125,13 +128,20 @@ void fatalError(int type){
 	}
 }
 
+extern unsigned int _CONFIG_HEAP_SIZE;
+extern unsigned portCHAR  _heap_address[];
+extern unsigned int __heap_start__;
+extern unsigned int __heap_end__;
+
+
+
 int main( void )
 {
-	
-
 	//setup hardware
 	int success = setupHardware();
 	if (! success) fatalError(FATAL_ERROR_HARDWARE);
+
+	InitBaseCommands();
 
 	xTaskCreate( vUSBCDCTask,		( signed portCHAR * ) "USB", 				mainUSB_TASK_STACK, 		NULL, 	mainUSB_PRIORITY, 			NULL );
 	xTaskCreate( onUSBCommTask,	( signed portCHAR * ) "OnUSBComm", 		mainUSB_COMM_STACK, 		NULL, 	USB_COMM_TASK_PRIORITY, 	NULL );
