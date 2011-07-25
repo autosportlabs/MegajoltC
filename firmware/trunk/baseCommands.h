@@ -12,8 +12,6 @@
 
 void InitBaseCommands();
 
-void TestCommand(unsigned char argc, char **argv);
-
 void ShowTaskInfo(unsigned char argc, char **argv);
 
 #endif /* BASECOMMANDS_H_ */
