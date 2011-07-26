@@ -18,6 +18,10 @@
 #include "usart.h"
 #include "baseCommands.h"
 #include "constants.h"
+#ifdef LUA_ENABLED
+	#include "luaCommands.h"
+	#include "luaTask.h"
+#endif
 
 /*-----------------*/
 /* Clock Selection */
