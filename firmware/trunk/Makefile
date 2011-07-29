@@ -71,6 +71,8 @@ USB_SRC_DIR = $(SAM7s_BASE_DIR)/usb
 SERIAL_SRC_DIR = $(SAM7s_BASE_DIR)/serial
 UTIL_DIR = $(SAM7s_BASE_DIR)/util
 MEMORY_SRC_DIR = $(SAM7s_BASE_DIR)/memory
+IGNITION_SRC_DIR = ignition
+IO_SRC_DIR = io
 
 # App specific dirs
 CPU_MODULE_DIR = cpu_module
@@ -93,12 +95,16 @@ $(UTIL_DIR)/modp_atonum.c \
 $(UTIL_DIR)/base64.c \
 $(MEMORY_SRC_DIR)/memory.c \
 $(RTOS_PORT_DIR)/MemMang/heap_2_combine.c \
+$(IO_SRC_DIR)/io.c \
+$(IGNITION_SRC_DIR)/runtime.c \
+$(IGNITION_SRC_DIR)/ignitionTask.c 
 
 # List C source files here which must be compiled in ARM-Mode.
 # use file-extension c for "c-only"-files
 SRCARM = $(RTOS_GCC_DIR)/portISR.c \
+$(IGNITION_SRC_DIR)/triggerWheelIsr.c \
 interrupt_utils.c \
-$(USB_SRC_DIR)/source/USBIsr.c 
+$(USB_SRC_DIR)/source/USBIsr.c  
 
 # List C++ source files here.
 # use file-extension cpp for C++-files (use extension .cpp)
@@ -160,8 +166,7 @@ CDEFS += -DSAM7_GCC
 CDEFS += -DTHUMB_INTERWORK
 
 # Place -I options here
-CINCS = -I. -I$(RTOS_MEMMANG_DIR) -I$(UTIL_DIR) -I$(MEMORY_SRC_DIR) -I$(SERIAL_SRC_DIR) -I$(USB_SRC_DIR)/include -I$(HW_DIR)/include -I$(RTOS_SRC_DIR)/include -I$(RTOS_GCC_DIR)
-#CINCS = -I. -I$(HW_DIR)/include -I$(RTOS_SRC_DIR)/include -I$(RTOS_GCC_DIR)
+CINCS = -I. -I$(RTOS_MEMMANG_DIR) -I$(UTIL_DIR) -I$(MEMORY_SRC_DIR) -I$(SERIAL_SRC_DIR) -I$(USB_SRC_DIR)/include -I$(HW_DIR)/include -I$(RTOS_SRC_DIR)/include -I$(RTOS_GCC_DIR) -I$(IGNITION_SRC_DIR) -I$(IO_SRC_DIR)
 # Place -D or -U options for ASM here
 ADEFS =  -D$(RUN_MODE)
 

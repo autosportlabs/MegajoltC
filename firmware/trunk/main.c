@@ -18,10 +18,15 @@
 #include "usart.h"
 #include "baseCommands.h"
 #include "constants.h"
+#include "ignitionTask.h"
+#include "io.h"
+#include "runtime.h"
+
 #ifdef LUA_ENABLED
 	#include "luaCommands.h"
 	#include "luaTask.h"
 #endif
+
 
 /*-----------------*/
 /* Clock Selection */
@@ -35,8 +40,10 @@
 
 /* Priorities for the demo application tasks. */
 #define USB_COMM_TASK_PRIORITY				( tskIDLE_PRIORITY + 2 )
-#define mainUSB_PRIORITY					( tskIDLE_PRIORITY + 2 )
+#define mainUSB_PRIORITY					( tskIDLE_PRIORITY + 1 )
 #define mainDEFAULT_TASK_PRIORITY 			( tskIDLE_PRIORITY + 1 )
+#define mainON_TOOTH_TASK_PRIORITY          ( tskIDLE_PRIORITY + 4 )
+#define mainON_REVOLUTION_TASK_PRIORITY     ( tskIDLE_PRIORITY + 3 )
 
 #define mainUSB_TASK_STACK					( 100 )
 #define mainUSB_COMM_STACK					( 1000 )
@@ -149,11 +156,13 @@ int main( void )
 
 	xTaskCreate( vUSBCDCTask,		( signed portCHAR * ) "USB", 				mainUSB_TASK_STACK, 		NULL, 	mainUSB_PRIORITY, 			NULL );
 	xTaskCreate( onUSBCommTask,	( signed portCHAR * ) "OnUSBComm", 		mainUSB_COMM_STACK, 		NULL, 	USB_COMM_TASK_PRIORITY, 	NULL );
-
+//	xTaskCreate(onRevolutionTask, ( signed portCHAR *) "OnRevolution",      mainON_REVOLUTION_STACK,        NULL,   mainON_REVOLUTION_TASK_PRIORITY, NULL);
 #ifdef LUA_ENABLED
 	InitLuaCommands();
 	startLuaTask();
 #endif
+	startIOTasks();
+	startIgnitionTasks();
 
    /* Start the scheduler.
 
