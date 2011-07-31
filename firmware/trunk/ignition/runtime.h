@@ -47,4 +47,6 @@ struct logical_coil_driver{
 void onRevolutionTask(void *);
 
 
+void getRuntime(unsigned char argc, char **argv);
+
 #endif /*RUNTIME_H_*/

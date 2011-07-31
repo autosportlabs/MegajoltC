@@ -2,7 +2,8 @@
 #include "USB-CDC.h"
 #include "board.h"
 #include "interrupt_utils.h"
-
+#include "io.h"
+#include "usb_comm.h"
 
 #include <string.h>
 
@@ -68,7 +69,9 @@ const struct engine_config g_saved_engine_config __attribute__((section(".text\n
 #define TC_CLKS_MCK128           0x3
 #define TC_CLKS_MCK1024          0x4
 
-	extern void ( coilPack_irq_handler )( void );
+static struct cmd_t getRuntimeCmd ={"getRuntime", "Outputs a delimited list of runtime values. Usage: getRuntime", getRuntime, NULL};
+
+extern void ( coilPack_irq_handler )( void );
 
 //*----------------------------------------------------------------------------
 //* Function Name       : timer_init
@@ -81,8 +84,17 @@ static void triggerWheelTimerInit( void )
 	extern void ( triggerWheel_irq_handler )( void );
 		
 
+	//pullup enable on timer 0
+	//AT91F_PIO_CfgInput(AT91C_BASE_PIOA, 1 << 0);
+	AT91C_BASE_PIOA->PIO_PPUER = (1 << 0);
+
   /* Set PIO pins for Timer Counter 0 */
-   AT91F_TC0_CfgPIO();
+   //AT91F_TC0_CfgPIO();
+	AT91F_PIO_CfgPeriph(
+		AT91C_BASE_PIOA, // PIO controller base address
+		0, // Peripheral A
+		((unsigned int) AT91C_PA0_TIOA0   ) |
+		((unsigned int) AT91C_PA1_TIOB0   ) ); // Peripheral B
    /* Enable TC0's clock in the PMC controller */
    AT91F_TC0_CfgPMC();
 
@@ -482,9 +494,36 @@ void calculateAdvance(){
 }
 
 
+static void initCommands(){
+	AppendCommand(&getRuntimeCmd);
+
+}
+
+void getRuntime(unsigned char argc, char **argv){
+
+	SendString("rpm=");
+	SendInt(g_currentRPM);
+	SendString(";load=");
+	SendInt(g_currentLoad);
+	SendString(";advance=");
+	SendInt(g_currentAdvance);
+	SendString(";rpmBin=");
+	SendInt(g_currentRPMBin);
+	SendString(";loadBin=");
+	SendInt(g_currentLoadBin);
+	SendString(";dwell=");
+	SendInt(g_currentDwellUSec);
+	SendString(";");
+	SendCrlf();
+}
 
 void onRevolutionTask(void *pvParameters){
 
+	AT91F_PIO_CfgOutput( AT91C_BASE_PIOA, COIL_DRIVER_ALL_PORTS );
+	AT91F_PIO_SetOutput( AT91C_BASE_PIOA, COIL_DRIVER_ALL_PORTS ) ;
+
+
+	initCommands();
 	initRuntimeData();
 
 	portENTER_CRITICAL();
@@ -493,8 +532,12 @@ void onRevolutionTask(void *pvParameters){
 	enableIRQ();
 	portEXIT_CRITICAL();
 
+	AT91F_PIO_CfgOutput( AT91C_BASE_PIOA, COILS_ENABLE );
+	AT91F_PIO_ClearOutput( AT91C_BASE_PIOA, COILS_ENABLE );
+
 	while(1){
 		if ( xSemaphoreTake(xOnRevolutionHandle, 1) == pdTRUE){
+				ToggleLED(LED_2);
 				unsigned int crankPeriodUSec = calculateCrankPeriodUSec();
 				calculateRPM(crankPeriodUSec);
 				calculateDwellDegrees(crankPeriodUSec);

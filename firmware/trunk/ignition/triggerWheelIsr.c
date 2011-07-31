@@ -4,6 +4,7 @@
 #include "runtime.h"
 #include "semphr.h"
 #include "board.h"
+#include "io.h"
 
 
 extern xSemaphoreHandle 			xOnRevolutionHandle;
@@ -63,6 +64,7 @@ void triggerWheel_irq_handler(void)
 	AT91PS_TC TC_pt = AT91C_BASE_TC0;
 	portCHAR xTaskWoken = pdFALSE;
 
+	ToggleLED(LED_1);
     if ( TC_pt->TC_SR & AT91C_TC_COVFS ){
     	g_currentToothPeriodOverflowCount++;
     	if (g_currentToothPeriodOverflowCount > TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING){

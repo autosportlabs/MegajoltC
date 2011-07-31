@@ -8,7 +8,9 @@
 #ifndef IO_H_
 #define IO_H_
 
-#define LED_MASK (1 << 27 ) | (1 << 28 )
+#define LED_1 ( 1 << 27 )
+#define LED_2 ( 1 << 28 )
+#define LED_MASK LED_1 | LED_2
 
 void StartIOTasks(void);
 void InitIO(void);
