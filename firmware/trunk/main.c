@@ -47,6 +47,7 @@
 
 #define mainUSB_TASK_STACK					( 100 )
 #define mainUSB_COMM_STACK					( 1000 )
+#define mainON_REVOLUTION_STACK				( 500 )
 
 #define mainNO_ERROR_FLASH_PERIOD			( ( portTickType ) 1000 / portTICK_RATE_MS  )
 #define mainBUSY_FLASH_PERIOD				( ( portTickType ) 500 / portTICK_RATE_MS )
@@ -154,15 +155,16 @@ int main( void )
 
 	InitBaseCommands();
 
+
 	xTaskCreate( vUSBCDCTask,		( signed portCHAR * ) "USB", 				mainUSB_TASK_STACK, 		NULL, 	mainUSB_PRIORITY, 			NULL );
 	xTaskCreate( onUSBCommTask,	( signed portCHAR * ) "OnUSBComm", 		mainUSB_COMM_STACK, 		NULL, 	USB_COMM_TASK_PRIORITY, 	NULL );
-//	xTaskCreate(onRevolutionTask, ( signed portCHAR *) "OnRevolution",      mainON_REVOLUTION_STACK,        NULL,   mainON_REVOLUTION_TASK_PRIORITY, NULL);
+	StartIOTasks();
+	xTaskCreate(onRevolutionTask, ( signed portCHAR *) "OnRevolution",      mainON_REVOLUTION_STACK,        NULL,   mainON_REVOLUTION_TASK_PRIORITY, NULL);
 #ifdef LUA_ENABLED
 	InitLuaCommands();
 	startLuaTask();
 #endif
-	startIOTasks();
-	startIgnitionTasks();
+//	startIgnitionTasks();
 
    /* Start the scheduler.
 

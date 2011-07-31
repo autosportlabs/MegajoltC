@@ -9,7 +9,7 @@
 #include "board.h"
 #include "io.h"
 
-void startIOTasks(void){
+void StartIOTasks(void){
 	InitIO();
 }
 void InitIO(void){
