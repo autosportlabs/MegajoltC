@@ -22,9 +22,11 @@ extern unsigned int 				g_engineIsRunning;
 extern unsigned int					g_toothCountAtLastSyncAttempt;
 extern unsigned int					g_wheelSyncAttempts;
 extern unsigned int 				g_wheelSynchronized;
-extern struct logical_coil_driver 	g_logical_coil_drivers[2][MAX_COIL_DRIVERS];
-extern struct logical_coil_driver	*g_active_logical_coil_drivers;
-extern unsigned int					g_logicalCoilDriverCount;
+
+extern unsigned int 				g_coilFirePort[CRANK_TEETH];
+extern unsigned int					g_coilFireTimerCount[CRANK_TEETH];
+extern unsigned int					g_coilChargePort[CRANK_TEETH];
+extern unsigned int					g_coilChargeTimerCount[CRANK_TEETH];
 
 #define TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING 2
 
@@ -73,7 +75,9 @@ void triggerWheel_irq_handler(void)
     		TC_pt->TC_CCR = AT91C_TC_CLKDIS;
     		TC_pt->TC_CCR = AT91C_TC_CLKEN;
     		g_engineIsRunning = 0;
-    		//TODO: stop timer	
+    		g_wheelSynchronized = 0;
+    		g_wheelSyncAttempts = 0;
+    		//TODO: stop timer
     	}
     	goto trigger_wheel_irq_handler_exit;
     }
@@ -85,7 +89,7 @@ void triggerWheel_irq_handler(void)
 	unsigned int wheelSynchronized = g_wheelSynchronized;
 	unsigned int currentCrankRevolutionPeriodRaw = g_currentCrankRevolutionPeriodRaw;
   
-  	struct logical_coil_driver *previous_coil_drivers = NULL;
+  //	struct logical_coil_driver *previous_coil_drivers = NULL;
   	
 	//if the inter-tooth period is more than 1.5 times the last tooth, we
 	//detected the missing tooth
@@ -117,13 +121,6 @@ void triggerWheel_irq_handler(void)
 			g_lastCrankRevolutionPeriodRaw = currentCrankRevolutionPeriodRaw + currentInterToothPeriodRaw;
 			//start tooth #1 with the current period
 			currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
-			previous_coil_drivers = g_active_logical_coil_drivers;			
-			if (g_active_logical_coil_drivers == g_logical_coil_drivers[0]){
-				g_active_logical_coil_drivers = g_logical_coil_drivers[1];
-			}
-			else{
-				g_active_logical_coil_drivers = g_logical_coil_drivers[0];
-			}
 			//we're at a missing tooth- signal RPM/advance calculation task
 			xTaskWoken = xSemaphoreGiveFromISR( xOnRevolutionHandle, xTaskWoken );
 			g_engineIsRunning = 1;
@@ -138,64 +135,22 @@ void triggerWheel_irq_handler(void)
 	
 	if (wheelSynchronized){
 		
-		//if we're synchronized to the wheel we can now 
-		//determine if a coil needs to be fired.
+		unsigned int firePort = g_coilFirePort[currentTooth];
+		if (0 !=  firePort){
+			g_coilDriversToFire = firePort;
+			AT91C_BASE_TC2->TC_RC = g_coilFireTimerCount[currentTooth];
+			//Fire the coil
+			AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
+			goto trigger_wheel_irq_handler_end;
+		}
 		
-		//figure out the next tooth - we will do a look-ahead trigger on the next tooth
-		unsigned int nextTooth = currentTooth + 1;
-		if (nextTooth >=CRANK_TEETH) nextTooth = 0;
-
-		//*******************************************
-		//Check if we need to fire a coil
-		//*******************************************
-		struct logical_coil_driver *coilDriver = g_active_logical_coil_drivers + (g_logicalCoilDriverCount - 1);
-		do{
-			if (nextTooth == coilDriver->coilFireTooth){
-				g_coilDriversToFire = coilDriver->physicalCoilDriverPorts;
-				unsigned int rawCount = currentInterToothPeriodRaw + ((currentInterToothPeriodRaw / DEGREES_PER_TOOTH) * coilDriver->coilFireInterToothDegrees);
-				rawCount = rawCount / 4;  //adjust for different timer clock
-				AT91C_BASE_TC2->TC_RC = rawCount;
-				//Fire the coil
-				AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
-				goto trigger_wheel_irq_handler_end;
-			}
-		}while (coilDriver-- != g_active_logical_coil_drivers);
-		
-		//*******************************************
-		//Check if we need to start the coil charging
-		//*******************************************
-		
-		for (int i = 0; i < g_logicalCoilDriverCount; i++){
-			coilDriver = g_active_logical_coil_drivers + i;
-			if (nextTooth == coilDriver->coilOnTooth){
-				g_coilDriversToCharge = coilDriver->physicalCoilDriverPorts;
-				unsigned int rawCount = currentInterToothPeriodRaw + ((currentInterToothPeriodRaw / DEGREES_PER_TOOTH) * coilDriver->coilOnInterToothDegrees);
-				rawCount = rawCount / 4; //adjust for different timer clock
-				AT91C_BASE_TC2->TC_RC = rawCount;
-				AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
-				goto trigger_wheel_irq_handler_end;
-			}
-			//accout for starting the coil charge on the missing tooth
-			else if (nextTooth == 0 && coilDriver->coilOnTooth == 1){
-				g_coilDriversToCharge = coilDriver->physicalCoilDriverPorts;
-				unsigned int rawCount = currentInterToothPeriodRaw + currentInterToothPeriodRaw + ((currentInterToothPeriodRaw / DEGREES_PER_TOOTH) * coilDriver->coilOnInterToothDegrees);
-				rawCount = rawCount / 4; //adjust for different timer clock
-				AT91C_BASE_TC2->TC_RC = rawCount;
-				AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
-				goto trigger_wheel_irq_handler_end;
-			}
-			else if (previous_coil_drivers != NULL){
-				struct logical_coil_driver *previousCoilDriver = previous_coil_drivers + i;
-				if (previousCoilDriver->coilOnTooth == nextTooth){
-					g_coilDriversToCharge = previousCoilDriver->physicalCoilDriverPorts;
-					unsigned int rawCount = currentInterToothPeriodRaw + ((currentInterToothPeriodRaw / DEGREES_PER_TOOTH) * previousCoilDriver->coilOnInterToothDegrees);
-					rawCount = rawCount / 4; //adjust for different timer clock
-					AT91C_BASE_TC2->TC_RC = rawCount;
-					AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
-					goto trigger_wheel_irq_handler_end;
-				} 	
-			}
-		} 
+		unsigned int chargePort = g_coilChargePort[currentTooth];
+		if (0 != chargePort){
+			g_coilDriversToCharge = chargePort;
+			AT91C_BASE_TC2->TC_RC = g_coilChargeTimerCount[currentTooth];
+			AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
+			goto trigger_wheel_irq_handler_end;
+		}
 	}
 
 trigger_wheel_irq_handler_end:

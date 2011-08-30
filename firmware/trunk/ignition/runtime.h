@@ -6,6 +6,9 @@
 #include "semphr.h"
 #include "ignition_config.h"
 
+//the number of timer ticks representing the
+//trigger wheel ISR latency
+#define ISR_OVEREAD_TIMER_TICK_COUNTS		126
 
 #define USER_OUTPUT_RPM_HYSTERESIS  		100
 #define USER_OUTPUT_LOAD_HYSTERESIS 		2
@@ -33,13 +36,14 @@
 
 struct logical_coil_driver{
 	int cylinderTDC;
-	int coilOnDegrees;
-	int coilOnTooth;
-	int coilOnInterToothDegrees;
+	int coilChargeDegrees;
+	int coilChargeTooth;
 	int coilFireDegrees;
 	int coilFireTooth;
-	int coilFireInterToothDegrees;
 	unsigned int physicalCoilDriverPorts;
+	unsigned int timerFireCount;
+	unsigned int timerChargeCount;
+
 };
 
 
@@ -48,5 +52,9 @@ void onRevolutionTask(void *);
 
 
 void getRuntime(unsigned char argc, char **argv);
+void getDebug(unsigned char argc, char **argv);
+void setIgnitionCell(unsigned char argc, char **argv);
+void setIgnitionRPMBin(unsigned char argc, char **argv);
+void setIgnitionLoadBin(unsigned char argc, char **argv);
 
 #endif /*RUNTIME_H_*/

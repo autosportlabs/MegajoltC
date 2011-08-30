@@ -1,41 +1,47 @@
+#include <string.h>
+
 #include "runtime.h"
 #include "USB-CDC.h"
 #include "board.h"
 #include "interrupt_utils.h"
 #include "io.h"
 #include "usb_comm.h"
-
-#include <string.h>
-
-char debugMsg[100];
+#include "modp_atonum.h"
 
 xSemaphoreHandle 			xOnRevolutionHandle;
 
 //****************************************************
 //Runtime data
-volatile unsigned int		g_wheelSyncAttempts;
-volatile unsigned int 		g_toothCountAtLastSyncAttempt;
-volatile unsigned int		g_currentCrankRevolutionPeriodRaw;
-volatile unsigned int 		g_lastCrankRevolutionPeriodRaw;
-volatile unsigned int		g_lastCrankRevolutionPeriodUSec;
-volatile unsigned int 		g_lastInterToothPeriodRaw;
-volatile unsigned int 		g_currentToothPeriodOverflowCount;
-volatile unsigned int 		g_wheelSynchronized;
-volatile unsigned int 		g_currentRPM;
-volatile unsigned int		g_currentDwellUSec;
-volatile unsigned int 		g_currentLoad;
-volatile unsigned int 		g_currentLoadBin;
-volatile unsigned int 		g_currentRPMBin;
-volatile int 				g_currentAdvance;
-volatile unsigned int 		g_currentDwellDegrees;
-volatile unsigned int 		g_engineIsRunning;
-struct logical_coil_driver *g_active_logical_coil_drivers;
-struct logical_coil_driver 	g_logical_coil_drivers[2][MAX_COIL_DRIVERS];
+unsigned int		g_wheelSyncAttempts;
+unsigned int 		g_toothCountAtLastSyncAttempt;
+unsigned int		g_currentCrankRevolutionPeriodRaw;
+unsigned int 		g_lastCrankRevolutionPeriodRaw;
+unsigned int		g_lastCrankRevolutionPeriodUSec;
+unsigned int 		g_lastInterToothPeriodRaw;
+unsigned int 		g_currentToothPeriodOverflowCount;
+unsigned int 		g_wheelSynchronized;
+unsigned int 		g_currentRPM;
+unsigned int		g_currentDwellUSec;
+unsigned int 		g_currentLoad;
+unsigned int 		g_currentLoadBin;
+unsigned int 		g_currentRPMBin;
+int 				g_currentAdvance;
+unsigned int 		g_currentDwellDegrees;
+unsigned int 		g_engineIsRunning;
 
-unsigned int				g_logicalCoilDriverCount;
-unsigned int				g_currentTooth;
-unsigned int				g_coilDriversToFire;
-unsigned int				g_coilDriversToCharge;
+unsigned int		g_currentTooth;
+unsigned int		g_coilDriversToFire;
+unsigned int		g_coilDriversToCharge;
+
+unsigned int 		g_coilFirePort[CRANK_TEETH];
+unsigned int		g_coilFireTimerCount[CRANK_TEETH];
+unsigned int		g_coilChargePort[CRANK_TEETH];
+unsigned int		g_coilChargeTimerCount[CRANK_TEETH];
+
+struct logical_coil_driver 	g_logical_coil_drivers[MAX_COIL_DRIVERS];
+unsigned int		g_logicalCoilDriverCount;
+
+
 //****************************************************
 
 int							g_selectedIgnitionConfigIndex;
@@ -46,6 +52,7 @@ struct engine_config 		g_active_engine_config;
 struct ignition_config		g_active_ignition_config[IGNITION_CONFIGS];
 struct ignition_config 		*g_selected_ignition_config;
 
+//mapping the actual PIO ports of each coil driver output
 const unsigned int g_coilDriver_mappings[COIL_DRIVERS]={COIL_0,COIL_1,COIL_2,COIL_3,COIL_4,COIL_5,COIL_6,COIL_7};
 
 //Flash storage for configuration data
@@ -69,7 +76,12 @@ const struct engine_config g_saved_engine_config __attribute__((section(".text\n
 #define TC_CLKS_MCK128           0x3
 #define TC_CLKS_MCK1024          0x4
 
-static struct cmd_t getRuntimeCmd ={"getRuntime", "Outputs a delimited list of runtime values. Usage: getRuntime", getRuntime, NULL};
+static struct cmd_t getRuntimeCmd = {"getRuntime", "Outputs a delimited list of runtime values. Usage: getRuntime", getRuntime, NULL};
+static struct cmd_t getDebugCmd =   {"getDebug", "Output Debug Values. Usage: getDebug", getDebug, NULL};
+static struct cmd_t setIgnitionCellCmd = {"setIgnCell","Sets an Ignition Map Cell. Usage: setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell, NULL};
+static struct cmd_t setIgnitionRPMBinCmd = {"setIgnRPMBin", "Sets an Ignition map RPM. Usage: setIgnRPMBin <rpmBin> <value>", setIgnitionRPMBin, NULL};
+static struct cmd_t setIgnitionLoadBinCmd = {"setIgnLoadBin", "Sets an Ignition map Load Bin. Usage: setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin, NULL};
+
 
 extern void ( coilPack_irq_handler )( void );
 
@@ -102,9 +114,9 @@ static void triggerWheelTimerInit( void )
 	AT91C_BASE_TC0,
 	
 	TC_CLKS_MCK2 | 
-	AT91C_TC_ETRGEDG_FALLING |	
+	AT91C_TC_ETRGEDG_FALLING |
 	AT91C_TC_ABETRG |
-	AT91C_TC_LDRA_RISING|
+	AT91C_TC_LDRA_RISING |
 	AT91C_TC_LDRB_FALLING
 	
 	,AT91C_ID_TC0
@@ -172,7 +184,7 @@ static void initLogicalCoilDrivers(struct logical_coil_driver *logical_coil_driv
 		if (cylinderTDC >= MAX_DEGREES) cylinderTDC = cylinderTDC - MAX_DEGREES;
 		
 		struct logical_coil_driver *logicalCoilDriver = findMatchingLogicalCoilDriver(cylinderTDC,logical_coil_drivers);
-		if (NULL == logicalCoilDriver){
+		if (NULL == logicalCoilDriver){ //add it to the first one
 			logicalCoilDriver = logical_coil_drivers + g_logicalCoilDriverCount;
 			logicalCoilDriver->cylinderTDC = cylinderTDC;
 			//set the physical port
@@ -190,28 +202,82 @@ static void initLogicalCoilDrivers(struct logical_coil_driver *logical_coil_driv
 //Update the cylinder runtime data based on the current ignition advance
 static void updateLogicalCoilDriverRuntimes(struct logical_coil_driver *logical_coil_drivers){
 
+	//todo optimize this? remove sizeof with constant?
+	memset(g_coilFirePort,0,sizeof(g_coilFirePort));
+	memset(g_coilFireTimerCount,0, sizeof(g_coilFireTimerCount));
+	memset(g_coilChargePort,0,sizeof(g_coilChargePort));
+	memset(g_coilChargeTimerCount,0,sizeof(g_coilChargeTimerCount));
+
 	int count = g_logicalCoilDriverCount;
 	
 	struct logical_coil_driver *logicalCoilPack = logical_coil_drivers;
+
+	int coilInterToothPeriod = g_lastCrankRevolutionPeriodRaw / CRANK_TEETH;
+	unsigned int periodPerDegree = g_lastCrankRevolutionPeriodRaw / MAX_DEGREES;
+
 	while (count > 0){
 		
+		//calculate coil firing point
 		int coilFireDegrees = logicalCoilPack->cylinderTDC - g_currentAdvance;
 		if ( coilFireDegrees < 0 ) coilFireDegrees = coilFireDegrees + MAX_DEGREES;
-		int coilFireTooth = coilFireDegrees / DEGREES_PER_TOOTH;
-		int coilFireInterToothDegrees = coilFireDegrees % DEGREES_PER_TOOTH;		
 
-		int coilOnDegrees = coilFireDegrees - g_currentDwellDegrees;
-		if ( coilOnDegrees < 0 ) coilOnDegrees = coilOnDegrees + MAX_DEGREES;
-		int coilOnTooth = coilOnDegrees / DEGREES_PER_TOOTH;
-		int coilOnInterToothDegrees = coilOnDegrees % DEGREES_PER_TOOTH;
+		// we schedule the firing one tooth ahead
+		int coilFireTooth = (coilFireDegrees / DEGREES_PER_TOOTH) - 1;
+		if (coilFireTooth < 0 ) coilFireTooth = CRANK_TEETH - 1;
 
+		int coilFireInterToothDegrees = coilFireDegrees % DEGREES_PER_TOOTH;
+
+		//the timer fire count is calculated one tooth ahead
+		//and compensated for trigger wheel IRQ hander overhead
+		unsigned int timerFireCount = coilInterToothPeriod - ISR_OVEREAD_TIMER_TICK_COUNTS + ( periodPerDegree * coilFireInterToothDegrees);
+
+		//check if we've landed on the missing tooth (tooth zero)
+		//and roll over to the last tooth if necessary
+		if (0 == coilFireTooth){
+			coilFireTooth = CRANK_TEETH - 1;
+			timerFireCount += coilInterToothPeriod;
+		}
+
+		// divide /4 = adjust for different timer clock
+		timerFireCount = timerFireCount / 4;
+
+		logicalCoilPack->timerFireCount = timerFireCount;
 		logicalCoilPack->coilFireDegrees = coilFireDegrees;
 		logicalCoilPack->coilFireTooth = coilFireTooth;
-		logicalCoilPack->coilFireInterToothDegrees = coilFireInterToothDegrees;
 
-		logicalCoilPack->coilOnDegrees = coilOnDegrees;
-		logicalCoilPack->coilOnTooth = coilOnTooth;
-		logicalCoilPack->coilOnInterToothDegrees = coilOnInterToothDegrees;
+		g_coilFirePort[coilFireTooth] = logicalCoilPack->physicalCoilDriverPorts;
+		g_coilFireTimerCount[coilFireTooth] = timerFireCount;
+
+		//Calculate coil charging point
+		int coilOnDegrees = coilFireDegrees - g_currentDwellDegrees;
+		if ( coilOnDegrees < 0 ) coilOnDegrees = coilOnDegrees + MAX_DEGREES;
+
+		// we schedule  the charging one tooth ahead
+		int coilOnTooth = (coilOnDegrees / DEGREES_PER_TOOTH) - 1;
+		if (coilOnTooth < 0 ) coilOnTooth = CRANK_TEETH - 1;
+
+		int coilOnInterToothDegrees = coilOnDegrees % DEGREES_PER_TOOTH;
+
+		//the timer charge count is calculated one tooth ahead
+		//and compensated for trigger wheel IRQ hander overhead
+		unsigned int timerChargeCount = (coilInterToothPeriod - ISR_OVEREAD_TIMER_TICK_COUNTS + (periodPerDegree * coilOnInterToothDegrees)) / 4; // divide /4 = adjust for different timer clock
+
+		//check if we've landed on the missing tooth (tooth zero)
+		//and roll over to the last tooth if necessary
+		if (0 == coilOnTooth){
+			coilOnTooth = CRANK_TEETH - 1;
+			timerChargeCount += coilInterToothPeriod;
+		}
+
+		// divide /4 = adjust for different timer clock
+		timerChargeCount = timerChargeCount / 4;
+
+		logicalCoilPack->timerChargeCount = timerChargeCount;
+		logicalCoilPack->coilChargeDegrees = coilOnDegrees;
+		logicalCoilPack->coilChargeTooth = coilOnTooth;
+
+		g_coilChargePort[coilOnTooth] = logicalCoilPack->physicalCoilDriverPorts;
+		g_coilChargeTimerCount[coilOnTooth] = timerChargeCount;
 		
 		logicalCoilPack++;
 		count--;	
@@ -240,7 +306,7 @@ static void initRuntimeData( void ){
 	g_selectedIgnitionConfigIndex = 0;
 
 	//copy from flash to RAM
-	memcpy(g_active_ignition_config, g_saved_ignition_config,sizeof(g_active_ignition_config));
+	memcpy(g_active_ignition_config, g_saved_ignition_config, sizeof(g_active_ignition_config));
 	memcpy(&g_active_engine_config, &g_saved_engine_config, sizeof(g_active_engine_config));
 
 	//set the pointer to the active config
@@ -263,13 +329,9 @@ static void initRuntimeData( void ){
 	g_currentDwellUSec = DEFAULT_DWELL_USEC;
 	g_currentAdvance = g_active_engine_config.cranking_degrees;
 	g_lastCrankRevolutionPeriodRaw = CRANKING_REVOLUTION_PERIOD_RAW;
-	g_coilDriversToCharge = 0;
-	g_coilDriversToFire = 0;
-	initLogicalCoilDrivers(g_logical_coil_drivers[0]);
-	initLogicalCoilDrivers(g_logical_coil_drivers[1]);
-	g_active_logical_coil_drivers = g_logical_coil_drivers[0];
+	initLogicalCoilDrivers(g_logical_coil_drivers);
 	g_currentDwellDegrees = 0;
-	updateLogicalCoilDriverRuntimes(g_active_logical_coil_drivers);
+	updateLogicalCoilDriverRuntimes(g_logical_coil_drivers);
 }
 
 
@@ -493,29 +555,14 @@ void calculateAdvance(){
 	g_currentRPMBin = rpmBin;
 }
 
-
 static void initCommands(){
 	AppendCommand(&getRuntimeCmd);
-
+	AppendCommand(&getDebugCmd);
+	AppendCommand(&setIgnitionLoadBinCmd);
+	AppendCommand(&setIgnitionRPMBinCmd);
+	AppendCommand(&setIgnitionCellCmd);
 }
 
-void getRuntime(unsigned char argc, char **argv){
-
-	SendString("rpm=");
-	SendInt(g_currentRPM);
-	SendString(";load=");
-	SendInt(g_currentLoad);
-	SendString(";advance=");
-	SendInt(g_currentAdvance);
-	SendString(";rpmBin=");
-	SendInt(g_currentRPMBin);
-	SendString(";loadBin=");
-	SendInt(g_currentLoadBin);
-	SendString(";dwell=");
-	SendInt(g_currentDwellUSec);
-	SendString(";");
-	SendCrlf();
-}
 
 void onRevolutionTask(void *pvParameters){
 
@@ -544,16 +591,231 @@ void onRevolutionTask(void *pvParameters){
 				g_lastCrankRevolutionPeriodUSec = crankPeriodUSec;
 				g_currentLoad = 20;
 				calculateAdvance();
-				if (g_active_logical_coil_drivers == g_logical_coil_drivers[0]){
-					updateLogicalCoilDriverRuntimes(g_logical_coil_drivers[1]);
-				}
-				else{
-					updateLogicalCoilDriverRuntimes(g_logical_coil_drivers[0]);
-				}
+
+
+				updateLogicalCoilDriverRuntimes(g_logical_coil_drivers);
+//				if (g_active_logical_coil_drivers == g_logical_coil_drivers[0]){
+	//				updateLogicalCoilDriverRuntimes(g_logical_coil_drivers[1]);
+		//		}
+			//	else{
+				//	updateLogicalCoilDriverRuntimes(g_logical_coil_drivers[0]);
+				//}
 //				updateUserOutputs();
 		}
 	}
 }
+
+///Ignition Related API Commands
+
+
+void SendResult(int success){
+	SendNameInt("result",success);
+	SendCrlf();
+}
+
+void setIgnitionCell(unsigned char argc, char **argv){
+
+	if (argc < 4){
+		SendResult(0);
+		return;
+	}
+
+	//TODO validate params
+	int rpmBin = modp_atoi(argv[1]);
+	int loadBin = modp_atoi(argv[2]);
+	int value = modp_atoi(argv[3]);
+
+	g_selected_ignition_config->map.ignition_advance[loadBin][rpmBin] = value;
+	SendResult(1);
+
+}
+
+void setIgnitionRPMBin(unsigned char argc, char **argv){
+
+	if (argc < 3){
+		SendResult(0);
+		return;
+	}
+
+	//TODO validate params
+	int rpmBin = modp_atoi(argv[1]);
+	int value = modp_atoi(argv[2]);
+
+	g_selected_ignition_config->map.rpm_bins[rpmBin] = value;
+	SendResult(1);
+}
+
+void setIgnitionLoadBin(unsigned char argc, char **argv){
+	if (argc < 3){
+		SendResult(0);
+		return;
+	}
+
+	//TODO validate params
+	int loadBin = modp_atoi(argv[1]);
+	int value = modp_atoi(argv[2]);
+
+	g_selected_ignition_config->map.load_bins[loadBin] = value;
+	SendResult(1);
+}
+
+void getRuntime(unsigned char argc, char **argv){
+	SendNameUint("rpm",g_currentRPM);
+	SendNameUint("load",g_currentLoad);
+	SendNameInt("advance",g_currentAdvance);
+	SendNameUint("rpmBin",g_currentRPMBin);
+	SendNameUint("loadBin", g_currentLoadBin);
+	SendNameUint("dwell", g_currentDwellUSec);
+	SendCrlf();
+}
+
+void getDebug(unsigned char argc, char **argv){
+
+
+	SendString("==========================================");
+	SendCrlf();
+	SendString("Activity for Crank Teeth 0 -> ");
+	SendInt(CRANK_TEETH - 1);
+	SendCrlf();
+	SendString("==========================================");
+	SendCrlf();
+
+	SendString("Coil Fire Port          ");
+	for (int i = 0; i < CRANK_TEETH; i++){
+		SendUint(g_coilFirePort[i]);
+		SendString(" ");
+	}
+	SendCrlf();
+	SendString("Coil Fire Timer Count   ");
+	for (int i = 0; i < CRANK_TEETH; i++){
+		SendUint(g_coilFireTimerCount[i]);
+		SendString(" ");
+	}
+	SendCrlf();
+	SendString("Coil Charge Port        ");
+	for (int i = 0; i < CRANK_TEETH; i++){
+		SendUint(g_coilChargePort[i]);
+		SendString(" ");
+	}
+	SendCrlf();
+	SendString("Coil Charge Timer Count ");
+	for (int i = 0; i < CRANK_TEETH; i++){
+		SendUint(g_coilChargeTimerCount[i]);
+		SendString(" ");
+	}
+	SendCrlf();
+	SendCrlf();
+
+	int count = 0;
+	struct logical_coil_driver *logicalCoilPack = g_logical_coil_drivers;
+
+	while (count < g_logicalCoilDriverCount){
+		SendString("==========================================");
+		SendCrlf();
+		SendString("Logical Coil Pack                   ");
+		SendInt(count);
+		SendCrlf();
+		SendString("==========================================");
+		SendCrlf();
+		SendString("Cylinder TDC                        ");
+		SendInt(logicalCoilPack->cylinderTDC);
+		SendCrlf();
+		SendString("Physical Driver Ports               ");
+		SendUint(logicalCoilPack->physicalCoilDriverPorts);
+		SendCrlf();
+		SendCrlf();
+
+		SendString("Timer Fire Count                    ");
+		SendUint(logicalCoilPack->timerFireCount);
+		SendCrlf();
+		SendString("Coil Fire Degrees                   ");
+		SendInt(logicalCoilPack->coilFireDegrees);
+		SendCrlf();
+		SendString("Coil Fire Tooth                     ");
+		SendInt(logicalCoilPack->coilFireTooth);
+		SendCrlf();
+		SendCrlf();
+
+		SendString("Timer Charge Count                  ");
+		SendUint(logicalCoilPack->timerChargeCount);
+		SendCrlf();
+		SendString("Coil Charge Degrees                 ");
+		SendInt(logicalCoilPack->coilChargeDegrees);
+		SendCrlf();
+		SendString("Coil Charge Tooth                   ");
+		SendInt(logicalCoilPack->coilChargeTooth);
+		SendCrlf();
+		SendCrlf();
+
+		logicalCoilPack++;
+		count++;
+	}
+
+	SendString("==========================================");
+	SendCrlf();
+	SendString("Runtime Variables");
+	SendCrlf();
+	SendString("==========================================");
+	SendCrlf();
+	SendString("Engine Is running                   ");
+	SendUint(g_engineIsRunning);
+	SendCrlf();
+	SendString("Wheel Synchronized                  ");
+	SendUint(g_wheelSynchronized);
+	SendCrlf();
+	SendString("Current RPM                         ");
+	SendUint(g_currentRPM);
+	SendCrlf();
+	SendString("Current Load                        ");
+	SendUint(g_currentLoad);
+	SendCrlf();
+	SendString("Current Load Bin                    ");
+	SendUint(g_currentLoadBin);
+	SendCrlf();
+	SendString("Current RPM Bin                     ");
+	SendUint(g_currentRPMBin);
+	SendCrlf();
+	SendString("Current Advance                     ");
+	SendUint(g_currentAdvance);
+	SendCrlf();
+	SendString("Current Dwell Degrees               ");
+	SendUint(g_currentDwellDegrees);
+	SendCrlf();
+	SendString("Current Dwell USec                  ");
+	SendUint(g_currentDwellUSec);
+	SendCrlf();
+	SendString("Current Crank RevolutionPeriod Raw  ");
+	SendUint(g_currentCrankRevolutionPeriodRaw);
+	SendCrlf();
+	SendString("Last Crank Revolution Period Raw    ");
+	SendUint(g_lastCrankRevolutionPeriodRaw);
+	SendCrlf();
+	SendString("Last Crank Revolution USec          ");
+	SendUint(g_lastCrankRevolutionPeriodUSec);
+	SendCrlf();
+	SendString("Last Inter-tooth Period Raw         ");
+	SendUint(g_lastInterToothPeriodRaw);
+	SendCrlf();
+	SendString("Current Tooth Period Overflow Count ");
+	SendUint(g_currentToothPeriodOverflowCount);
+	SendCrlf();
+	SendString("Current Tooth                       ");
+	SendUint(g_currentTooth);
+	SendCrlf();
+	SendString("Wheel Sync Attempts                 ");
+	SendUint(g_wheelSyncAttempts);
+	SendCrlf();
+	SendString("Tooth Count at Last Sync Attemp:    ");
+	SendUint(g_toothCountAtLastSyncAttempt);
+	SendCrlf();
+	SendString("Coil Drivers to Fire                ");
+	SendUint(g_coilDriversToFire);
+	SendCrlf();
+	SendString("Coil Drivers to Charge              ");
+	SendUint(g_coilDriversToCharge);
+	SendCrlf();
+}
+
 
 
 

@@ -12,8 +12,8 @@
 #define MIN_SCALED_RPM			0
 #define MAX_SCALED_RPM			150
 #define CRANKING_RPM			500
-#define MAX_CYLINDERS			8
-#define MAX_COIL_DRIVERS		4
+#define MAX_CYLINDERS			12
+#define MAX_COIL_DRIVERS		8
 
 enum OUTPUT_TYPE{
 	OUTPUT_TYPE_RPM = 0,
