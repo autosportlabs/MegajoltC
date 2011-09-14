@@ -19,6 +19,7 @@
 #define CRANKING_REVOLUTION_PERIOD_RAW		3003427 //480 RPM
 #define MAX_DWELL_DEGREES					170  
 #define COIL_DRIVERS						8
+#define MAX_RPM								10000
 
 #define COILS_ENABLE (1 << 4)
 //Map coils to various PIOs
@@ -56,5 +57,11 @@ void getDebug(unsigned char argc, char **argv);
 void setIgnitionCell(unsigned char argc, char **argv);
 void setIgnitionRPMBin(unsigned char argc, char **argv);
 void setIgnitionLoadBin(unsigned char argc, char **argv);
+void getEngineConfig(unsigned char argc, char **argv);
+void getRpmBins(unsigned char argc, char **argv);
+void getLoadBins(unsigned char argc, char **argv);
+void getIgnMap(unsigned char argc, char **argv);
+void getUserOutCfg(unsigned char argc, char **argv);
+void setUserOutCfg(unsigned char argc, char **argv);
 
 #endif /*RUNTIME_H_*/

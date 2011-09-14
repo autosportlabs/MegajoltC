@@ -5,7 +5,7 @@
 
 #define RPM_BIN_COUNT 			12
 #define LOAD_BIN_COUNT 			12
-#define USER_DEFINED_OUTPUTS 	7
+#define USER_DEFINED_OUTPUTS 	2
 #define IGNITION_CONFIGS		2
 #define MIN_RPM					0
 #define MAX_RPM					15000

@@ -77,10 +77,17 @@ const struct engine_config g_saved_engine_config __attribute__((section(".text\n
 #define TC_CLKS_MCK1024          0x4
 
 static struct cmd_t getRuntimeCmd = {"getRuntime", "Outputs a delimited list of runtime values. Usage: getRuntime", getRuntime, NULL};
-static struct cmd_t getDebugCmd =   {"getDebug", "Output Debug Values. Usage: getDebug", getDebug, NULL};
-static struct cmd_t setIgnitionCellCmd = {"setIgnCell","Sets an Ignition Map Cell. Usage: setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell, NULL};
-static struct cmd_t setIgnitionRPMBinCmd = {"setIgnRPMBin", "Sets an Ignition map RPM. Usage: setIgnRPMBin <rpmBin> <value>", setIgnitionRPMBin, NULL};
-static struct cmd_t setIgnitionLoadBinCmd = {"setIgnLoadBin", "Sets an Ignition map Load Bin. Usage: setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin, NULL};
+static struct cmd_t getDebugCmd =   {"getDebug", "Output debug values. Usage: getDebug", getDebug, NULL};
+static struct cmd_t setIgnitionCellCmd = {"setIgnCell","Sets an ignition map cell. Usage: setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell, NULL};
+static struct cmd_t setIgnitionRPMBinCmd = {"setIgnRPMBin", "Sets an ignition map RPM bin. Usage: setIgnRPMBin <rpmBin> <value>", setIgnitionRPMBin, NULL};
+static struct cmd_t setIgnitionLoadBinCmd = {"setIgnLoadBin", "Sets an ignition map load bin. Usage: setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin, NULL};
+static struct cmd_t getEngineConfigCmd = {"getEngineConfig", "Gets the current engine configuration. Usage: getEngineConfig", getEngineConfig, NULL};
+static struct cmd_t getRpmBinsCmd = {"getIgnRpmBins", "Gets the currently active ignition RPM bins. Usage: getRpmBins", getRpmBins, NULL};
+static struct cmd_t getLoadBinsCmd = {"getIgnLoadBins", "Gets the currently active load bins. Usage: getLoadBins", getLoadBins, NULL};
+static struct cmd_t getIgnitionMapCmd = {"getIgnMap", "Gets the currently active ignition map, in RPM x Load format. Usage: getIgnMap", getIgnMap, NULL};
+static struct cmd_t getUserOutCfgCmd = {"getUserOutCfg", "Gets the currently active user output configuration. Usage: getUserOutcfg <output>", getUserOutCfg, NULL};
+static struct cmd_t setUserOutCfgCmd = {"setUserOutCfg", "Sets the currently active user output configuration. Usage: setUserOutcfg <output> <type> <mode> <trigger>", getUserOutCfg, NULL};
+
 
 
 extern void ( coilPack_irq_handler )( void );
@@ -561,6 +568,12 @@ static void initCommands(){
 	AppendCommand(&setIgnitionLoadBinCmd);
 	AppendCommand(&setIgnitionRPMBinCmd);
 	AppendCommand(&setIgnitionCellCmd);
+	AppendCommand(&getEngineConfigCmd);
+	AppendCommand(&getRpmBinsCmd);
+	AppendCommand(&getLoadBinsCmd);
+	AppendCommand(&getIgnitionMapCmd);
+	AppendCommand(&getUserOutCfgCmd);
+	AppendCommand(&setUserOutCfgCmd);
 }
 
 
@@ -662,11 +675,112 @@ void setIgnitionLoadBin(unsigned char argc, char **argv){
 void getRuntime(unsigned char argc, char **argv){
 	SendNameUint("rpm",g_currentRPM);
 	SendNameUint("load",g_currentLoad);
-	SendNameInt("advance",g_currentAdvance);
+	SendNameInt("adv",g_currentAdvance);
 	SendNameUint("rpmBin",g_currentRPMBin);
 	SendNameUint("loadBin", g_currentLoadBin);
 	SendNameUint("dwell", g_currentDwellUSec);
 	SendCrlf();
+}
+
+void getEngineConfig(unsigned char argc, char **argv){
+	SendNameUint("cylCount",g_active_engine_config.cylinderCount);
+	SendNameUint("missingToothBtdcDeg", g_active_engine_config.missingToothBTDCDegrees);
+	SendNameUint("crankingDeg", g_active_engine_config.cranking_degrees);
+
+	for (int i=0; i < MAX_CYLINDERS; i++){
+		struct cylinder_config * cylConfig = &g_active_engine_config.cylinderConfigs[i];
+		SendNameIndexInt("tdcFireDeg", i, cylConfig->tdcFireDegrees);
+		SendNameIndexInt("coilDriver", i, cylConfig->coilDriver);
+	}
+	SendCrlf();
+}
+
+void getRpmBins(unsigned char argc, char **argv){
+	for (int i=0; i < RPM_BIN_COUNT; i++){
+		SendNameIndexInt("rpmBin", i, g_selected_ignition_config->map.rpm_bins[i]);
+	}
+	SendCrlf();
+}
+
+void getLoadBins(unsigned char argc, char **argv){
+	for (int i=0; i < LOAD_BIN_COUNT; i++){
+		SendNameIndexInt("loadBin", i, g_selected_ignition_config->map.load_bins[i]);
+	}
+	SendCrlf();
+}
+
+void getIgnMap(unsigned char argc, char **argv){
+	int i=0;
+	for (int l=0; l < LOAD_BIN_COUNT; l++){
+		for (int r=0; r < RPM_BIN_COUNT; r++){
+			SendNameIndexInt("adv",i++,g_selected_ignition_config->map.ignition_advance[l][r]);
+		}
+	}
+	SendCrlf();
+}
+
+void getUserOutCfg(unsigned char argc, char **argv){
+	if (argc < 2){
+		SendResult(0);
+		return;
+	}
+	int i= modp_atoi(argv[1]);
+	if (i < 0 || i > USER_DEFINED_OUTPUTS - 1){
+		SendResult(0);
+		return;
+	}
+
+	struct output_config * outputConfig = &g_selected_ignition_config->user_defined_outputs[i];
+	SendNameIndexInt("userOutType", i, outputConfig->output_type);
+	SendNameIndexInt("userOutMode", i, outputConfig->output_mode);
+	SendNameIndexInt("userOutTrigger", i, outputConfig->trigger_threshold);
+	SendCrlf();
+}
+
+void setUserOutCfg(unsigned char argc, char **argv){
+	if (argc < 5){
+		SendResult(0);
+		return;
+	}
+	int userOut = modp_atoi(argv[1]);
+	int type = modp_atoi(argv[2]);
+	int mode = modp_atoi(argv[3]);
+	int trigger = modp_atoi(argv[4]);
+
+	if (userOut < 0 || userOut > USER_DEFINED_OUTPUTS -1 ){
+		SendResult(0);
+		return;
+	}
+
+	switch (type){
+		case OUTPUT_TYPE_RPM:
+		case OUTPUT_TYPE_MAP:
+			break;
+		default:
+			SendResult(0);
+			return;
+	}
+
+	switch (mode){
+		case MODE_NORMAL:
+		case MODE_INVERTED:
+			break;
+		default:
+			SendResult(0);
+			return;
+	}
+
+	//TODO validate trigger threshold
+	//if (trigger < 0 || trigger > MAX_RPM){
+	//	SendResult(0);
+	// return;
+	//}
+	struct output_config * outputConfig = &g_selected_ignition_config->user_defined_outputs[userOut];
+	outputConfig->output_type = type;
+	outputConfig->output_mode = mode;
+	outputConfig->trigger_threshold = trigger;
+
+	SendResult(1);
 }
 
 void getDebug(unsigned char argc, char **argv){
@@ -815,6 +929,7 @@ void getDebug(unsigned char argc, char **argv){
 	SendUint(g_coilDriversToCharge);
 	SendCrlf();
 }
+
 
 
 
