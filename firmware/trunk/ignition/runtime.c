@@ -83,19 +83,9 @@ const short g_saved_Aux_caplibration[ADC_CALIBRATION_SIZE]    __attribute__((sec
 #define TC_CLKS_MCK128           0x3
 #define TC_CLKS_MCK1024          0x4
 
-static struct cmd_t getRuntimeCmd = {"getRuntime", "Outputs a delimited list of runtime values. Usage: getRuntime", getRuntime, NULL};
-static struct cmd_t getDebugCmd =   {"getDebug", "Output debug values. Usage: getDebug", getDebug, NULL};
-static struct cmd_t setIgnitionCellCmd = {"setIgnCell","Sets an ignition map cell. Usage: setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell, NULL};
-static struct cmd_t setIgnitionRPMBinCmd = {"setIgnRpmBin", "Sets an ignition map RPM bin. Usage: setIgnRpmBin <rpmBin> <value>", setIgnitionRPMBin, NULL};
-static struct cmd_t setIgnitionLoadBinCmd = {"setIgnLoadBin", "Sets an ignition map load bin. Usage: setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin, NULL};
-static struct cmd_t getEngineConfigCmd = {"getEngineCfg", "Gets the current engine configuration. Usage: getEngineCfg", getEngineConfig, NULL};
-static struct cmd_t getRpmBinsCmd = {"getIgnRpmBins", "Gets the currently active ignition RPM bins. Usage: getIgnRpmBins", getRpmBins, NULL};
-static struct cmd_t getLoadBinsCmd = {"getIgnLoadBins", "Gets the currently active load bins. Usage: getIgnLoadBins", getLoadBins, NULL};
-static struct cmd_t getIgnitionMapCmd = {"getIgnMap", "Gets the currently active ignition map, in RPM x Load format. Usage: getIgnMap", getIgnMap, NULL};
-static struct cmd_t getUserOutCfgCmd = {"getUserOutCfg", "Gets the currently active user output configuration. Usage: getUserOutcfg <output>", getUserOutCfg, NULL};
-static struct cmd_t setUserOutCfgCmd = {"setUserOutCfg", "Sets the currently active user output configuration. Usage: setUserOutcfg <output> <type> <mode> <trigger>", getUserOutCfg, NULL};
 
 extern void ( coilPack_irq_handler )( void );
+extern void ( triggerWheel_irq_handler )( void );
 
 //*----------------------------------------------------------------------------
 //* Function Name       : timer_init
@@ -105,7 +95,6 @@ extern void ( coilPack_irq_handler )( void );
 //*----------------------------------------------------------------------------
 static void triggerWheelTimerInit( void )
 {
-	extern void ( triggerWheel_irq_handler )( void );
 		
 
 	//pullup enable on timer 0
@@ -567,19 +556,6 @@ void calculateAdvance(){
 	g_currentRPMBin = rpmBin;
 }
 
-static void initCommands(){
-	AppendCommand(&getRuntimeCmd);
-	AppendCommand(&getDebugCmd);
-	AppendCommand(&setIgnitionLoadBinCmd);
-	AppendCommand(&setIgnitionRPMBinCmd);
-	AppendCommand(&setIgnitionCellCmd);
-	AppendCommand(&getEngineConfigCmd);
-	AppendCommand(&getRpmBinsCmd);
-	AppendCommand(&getLoadBinsCmd);
-	AppendCommand(&getIgnitionMapCmd);
-	AppendCommand(&getUserOutCfgCmd);
-	AppendCommand(&setUserOutCfgCmd);
-}
 
 
 void onRevolutionTask(void *pvParameters){
@@ -588,7 +564,6 @@ void onRevolutionTask(void *pvParameters){
 	AT91F_PIO_SetOutput( AT91C_BASE_PIOA, COIL_DRIVER_ALL_PORTS ) ;
 
 
-	initCommands();
 	initRuntimeData();
 
 	portENTER_CRITICAL();
@@ -631,7 +606,7 @@ void SendResult(int success){
 	SendCrlf();
 }
 
-void setIgnitionCell(unsigned char argc, char **argv){
+void setIgnitionCell(unsigned int argc, char **argv){
 
 	if (argc < 4){
 		SendResult(0);
@@ -648,7 +623,7 @@ void setIgnitionCell(unsigned char argc, char **argv){
 
 }
 
-void setIgnitionRPMBin(unsigned char argc, char **argv){
+void setIgnitionRPMBin(unsigned int argc, char **argv){
 
 	if (argc < 3){
 		SendResult(0);
@@ -663,7 +638,7 @@ void setIgnitionRPMBin(unsigned char argc, char **argv){
 	SendResult(1);
 }
 
-void setIgnitionLoadBin(unsigned char argc, char **argv){
+void setIgnitionLoadBin(unsigned int argc, char **argv){
 	if (argc < 3){
 		SendResult(0);
 		return;
@@ -677,7 +652,7 @@ void setIgnitionLoadBin(unsigned char argc, char **argv){
 	SendResult(1);
 }
 
-void getRuntime(unsigned char argc, char **argv){
+void getRuntime(unsigned int argc, char **argv){
 	SendNameUint("rpm",g_currentRPM);
 	SendNameUint("load",g_currentLoad);
 	SendNameInt("adv",g_currentAdvance);
@@ -687,7 +662,7 @@ void getRuntime(unsigned char argc, char **argv){
 	SendCrlf();
 }
 
-void getEngineConfig(unsigned char argc, char **argv){
+void getEngineConfig(unsigned int argc, char **argv){
 	SendNameUint("cylCount",g_active_engine_config.cylinderCount);
 	SendNameUint("missingToothBtdcDeg", g_active_engine_config.missingToothBTDCDegrees);
 	SendNameUint("crankingDeg", g_active_engine_config.cranking_degrees);
@@ -700,21 +675,21 @@ void getEngineConfig(unsigned char argc, char **argv){
 	SendCrlf();
 }
 
-void getRpmBins(unsigned char argc, char **argv){
+void getRpmBins(unsigned int argc, char **argv){
 	for (int i=0; i < RPM_BIN_COUNT; i++){
 		SendNameIndexInt("rpmBin", i, g_selected_ignition_config->map.rpm_bins[i]);
 	}
 	SendCrlf();
 }
 
-void getLoadBins(unsigned char argc, char **argv){
+void getLoadBins(unsigned int argc, char **argv){
 	for (int i=0; i < LOAD_BIN_COUNT; i++){
 		SendNameIndexInt("loadBin", i, g_selected_ignition_config->map.load_bins[i]);
 	}
 	SendCrlf();
 }
 
-void getIgnMap(unsigned char argc, char **argv){
+void getIgnMap(unsigned int argc, char **argv){
 	int i=0;
 	for (int l=0; l < LOAD_BIN_COUNT; l++){
 		for (int r=0; r < RPM_BIN_COUNT; r++){
@@ -724,7 +699,7 @@ void getIgnMap(unsigned char argc, char **argv){
 	SendCrlf();
 }
 
-void getUserOutCfg(unsigned char argc, char **argv){
+void getUserOutCfg(unsigned int argc, char **argv){
 	if (argc < 2){
 		SendResult(0);
 		return;
@@ -742,7 +717,7 @@ void getUserOutCfg(unsigned char argc, char **argv){
 	SendCrlf();
 }
 
-void setUserOutCfg(unsigned char argc, char **argv){
+void setUserOutCfg(unsigned int argc, char **argv){
 	if (argc < 5){
 		SendResult(0);
 		return;
@@ -788,7 +763,7 @@ void setUserOutCfg(unsigned char argc, char **argv){
 	SendResult(1);
 }
 
-void getDebug(unsigned char argc, char **argv){
+void getDebug(unsigned int argc, char **argv){
 
 
 	SendString("==========================================");

@@ -46,21 +46,33 @@ struct logical_coil_driver{
 
 };
 
+#define IGNITION_COMMANDS \
+		{"getRuntime", "Outputs a delimited list of runtime values.","getRuntime", getRuntime}, \
+		{"getDebug", "Output debug values.","getDebug", getDebug}, \
+		{"setIgnCell","Sets an ignition map cell.","setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell}, \
+		{"setIgnRpmBin", "Sets an ignition map RPM bin.","setIgnRpmBin <rpmBin> <value>", setIgnitionRPMBin}, \
+		{"setIgnLoadBin", "Sets an ignition map load bin.,","setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin}, \
+		{"getEngineCfg", "Gets the current engine configuration.","getEngineCfg", getEngineConfig}, \
+		{"getIgnRpmBins", "Gets the currently active ignition RPM bins.","getIgnRpmBins", getRpmBins}, \
+		{"getIgnLoadBins", "Gets the currently active load bins.","getIgnLoadBins", getLoadBins}, \
+		{"getIgnMap", "Gets the currently active ignition map, in RPM x Load format.","getIgnMap", getIgnMap}, \
+		{"getUserOutCfg", "Gets the currently active user output configuration.","getUserOutcfg <output>", getUserOutCfg}, \
+		{"setUserOutCfg", "Sets the currently active user output configuration.","setUserOutcfg <output> <type> <mode> <trigger>", getUserOutCfg} \
 
 //On revolution
 void onRevolutionTask(void *);
 
 
-void getRuntime(unsigned char argc, char **argv);
-void getDebug(unsigned char argc, char **argv);
-void setIgnitionCell(unsigned char argc, char **argv);
-void setIgnitionRPMBin(unsigned char argc, char **argv);
-void setIgnitionLoadBin(unsigned char argc, char **argv);
-void getEngineConfig(unsigned char argc, char **argv);
-void getRpmBins(unsigned char argc, char **argv);
-void getLoadBins(unsigned char argc, char **argv);
-void getIgnMap(unsigned char argc, char **argv);
-void getUserOutCfg(unsigned char argc, char **argv);
-void setUserOutCfg(unsigned char argc, char **argv);
+void getRuntime(unsigned int argc, char **argv);
+void getDebug(unsigned int argc, char **argv);
+void setIgnitionCell(unsigned int argc, char **argv);
+void setIgnitionRPMBin(unsigned int argc, char **argv);
+void setIgnitionLoadBin(unsigned int argc, char **argv);
+void getEngineConfig(unsigned int argc, char **argv);
+void getRpmBins(unsigned int argc, char **argv);
+void getLoadBins(unsigned int argc, char **argv);
+void getIgnMap(unsigned int argc, char **argv);
+void getUserOutCfg(unsigned int argc, char **argv);
+void setUserOutCfg(unsigned int argc, char **argv);
 
 #endif /*RUNTIME_H_*/

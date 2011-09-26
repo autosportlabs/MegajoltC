@@ -46,7 +46,7 @@
 #define mainON_REVOLUTION_TASK_PRIORITY     ( tskIDLE_PRIORITY + 3 )
 
 #define mainUSB_TASK_STACK					( 100 )
-#define mainUSB_COMM_STACK					( 1000 )
+#define mainUSB_COMM_STACK					( 100 )
 #define mainON_REVOLUTION_STACK				( 500 )
 
 #define mainNO_ERROR_FLASH_PERIOD			( ( portTickType ) 1000 / portTICK_RATE_MS  )
@@ -152,9 +152,6 @@ int main( void )
 	//setup hardware
 	int success = setupHardware();
 	if (! success) fatalError(FATAL_ERROR_HARDWARE);
-
-	InitBaseCommands();
-
 
 	xTaskCreate( vUSBCDCTask,		( signed portCHAR * ) "USB", 				mainUSB_TASK_STACK, 		NULL, 	mainUSB_PRIORITY, 			NULL );
 	xTaskCreate( onUSBCommTask,	( signed portCHAR * ) "OnUSBComm", 		mainUSB_COMM_STACK, 		NULL, 	USB_COMM_TASK_PRIORITY, 	NULL );
