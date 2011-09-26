@@ -62,6 +62,13 @@ const struct ignition_config g_saved_ignition_config[IGNITION_CONFIGS] __attribu
 //Engine configuration	
 const struct engine_config g_saved_engine_config __attribute__((section(".text\n\t#"))) = DEFAULT_ENGINE_CONFIG;
 
+//ADC Calibrations
+const short g_saved_MAP_caplibration[ADC_CALIBRATION_SIZE]  __attribute__((section(".text\n\t#"))) = DEFAULT_MAP_CALIBRATION;
+const short g_saved_TPS_caplibration[ADC_CALIBRATION_SIZE]  __attribute__((section(".text\n\t#"))) = DEFAULT_GENERIC_CALIBRATION;
+const short g_saved_Temp_caplibration[ADC_CALIBRATION_SIZE] __attribute__((section(".text\n\t#"))) = DEFAULT_TEMP_CALIBRATION;
+const short g_saved_Aux_caplibration[ADC_CALIBRATION_SIZE]    __attribute__((section(".text\n\t#"))) = DEFAULT_GENERIC_CALIBRATION;
+
+
 
 #define TIMER0_INTERRUPT_LEVEL		5
 #define TIMER1_INTERRUPT_LEVEL		7
@@ -79,16 +86,14 @@ const struct engine_config g_saved_engine_config __attribute__((section(".text\n
 static struct cmd_t getRuntimeCmd = {"getRuntime", "Outputs a delimited list of runtime values. Usage: getRuntime", getRuntime, NULL};
 static struct cmd_t getDebugCmd =   {"getDebug", "Output debug values. Usage: getDebug", getDebug, NULL};
 static struct cmd_t setIgnitionCellCmd = {"setIgnCell","Sets an ignition map cell. Usage: setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell, NULL};
-static struct cmd_t setIgnitionRPMBinCmd = {"setIgnRPMBin", "Sets an ignition map RPM bin. Usage: setIgnRPMBin <rpmBin> <value>", setIgnitionRPMBin, NULL};
+static struct cmd_t setIgnitionRPMBinCmd = {"setIgnRpmBin", "Sets an ignition map RPM bin. Usage: setIgnRpmBin <rpmBin> <value>", setIgnitionRPMBin, NULL};
 static struct cmd_t setIgnitionLoadBinCmd = {"setIgnLoadBin", "Sets an ignition map load bin. Usage: setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin, NULL};
-static struct cmd_t getEngineConfigCmd = {"getEngineConfig", "Gets the current engine configuration. Usage: getEngineConfig", getEngineConfig, NULL};
-static struct cmd_t getRpmBinsCmd = {"getIgnRpmBins", "Gets the currently active ignition RPM bins. Usage: getRpmBins", getRpmBins, NULL};
-static struct cmd_t getLoadBinsCmd = {"getIgnLoadBins", "Gets the currently active load bins. Usage: getLoadBins", getLoadBins, NULL};
+static struct cmd_t getEngineConfigCmd = {"getEngineCfg", "Gets the current engine configuration. Usage: getEngineCfg", getEngineConfig, NULL};
+static struct cmd_t getRpmBinsCmd = {"getIgnRpmBins", "Gets the currently active ignition RPM bins. Usage: getIgnRpmBins", getRpmBins, NULL};
+static struct cmd_t getLoadBinsCmd = {"getIgnLoadBins", "Gets the currently active load bins. Usage: getIgnLoadBins", getLoadBins, NULL};
 static struct cmd_t getIgnitionMapCmd = {"getIgnMap", "Gets the currently active ignition map, in RPM x Load format. Usage: getIgnMap", getIgnMap, NULL};
 static struct cmd_t getUserOutCfgCmd = {"getUserOutCfg", "Gets the currently active user output configuration. Usage: getUserOutcfg <output>", getUserOutCfg, NULL};
 static struct cmd_t setUserOutCfgCmd = {"setUserOutCfg", "Sets the currently active user output configuration. Usage: setUserOutcfg <output> <type> <mode> <trigger>", getUserOutCfg, NULL};
-
-
 
 extern void ( coilPack_irq_handler )( void );
 

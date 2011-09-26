@@ -14,10 +14,14 @@
 #define CRANKING_RPM			500
 #define MAX_CYLINDERS			12
 #define MAX_COIL_DRIVERS		8
+#define ADC_CALIBRATION_SIZE	64
 
 enum OUTPUT_TYPE{
 	OUTPUT_TYPE_RPM = 0,
-	OUTPUT_TYPE_MAP
+	OUTPUT_TYPE_MAP,
+	OUTPUT_TYPE_TPS,
+	OUTPUT_TYPE_AUX,
+	OUTPUT_TYPE_TEMP
 };
 
 enum OUTPUT_MODE{
@@ -49,12 +53,7 @@ struct output_config{
 struct ignition_config{
 	struct ignition_map 		map;
 	struct output_config 		user_defined_outputs[USER_DEFINED_OUTPUTS];
-};
-
-struct load_calibration{
-	int 					calibration[1024];
-	enum LOAD_TYPE			load_axis_type;
-	
+	enum LOAD_TYPE				load_axis_type;
 };
 
 struct cylinder_config{
