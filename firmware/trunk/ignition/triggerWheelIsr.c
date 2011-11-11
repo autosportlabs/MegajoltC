@@ -8,9 +8,6 @@
 
 
 extern xSemaphoreHandle 			xOnRevolutionHandle;
-extern int 							g_currentAdvance;
-extern unsigned int 				g_currentDwellDegrees;
-extern struct engine_config 		g_active_engine_config;
 extern unsigned int					g_currentCrankRevolutionPeriodRaw;
 extern unsigned int 				g_lastCrankRevolutionPeriodRaw;
 extern unsigned int 				g_currentToothPeriodOverflowCount;
@@ -22,13 +19,13 @@ extern unsigned int 				g_engineIsRunning;
 extern unsigned int					g_toothCountAtLastSyncAttempt;
 extern unsigned int					g_wheelSyncAttempts;
 extern unsigned int 				g_wheelSynchronized;
-
+extern unsigned int 				g_recalculateTooth;
 extern unsigned int 				g_coilFirePort[CRANK_TEETH];
 extern unsigned int					g_coilFireTimerCount[CRANK_TEETH];
 extern unsigned int					g_coilChargePort[CRANK_TEETH];
 extern unsigned int					g_coilChargeTimerCount[CRANK_TEETH];
 
-#define TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING 2
+#define TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING 10
 
 void coilPack_irq_handler( void )__attribute__ ((interrupt ("IRQ")));
 void coilPack_irq_handler(void){
@@ -40,7 +37,7 @@ void coilPack_irq_handler(void){
 	
 	AT91C_BASE_AIC->AIC_EOICR = AT91C_BASE_TC2->TC_SR;      //  Interrupt Ack
 	AT91C_BASE_AIC->AIC_ICCR  = (1 << AT91C_ID_TC2);        //  Interrupt Ack
-	
+
 	*AT91C_AIC_EOICR = 0;                                   // End of Interrupt
 }
 
@@ -66,7 +63,6 @@ void triggerWheel_irq_handler(void)
 	AT91PS_TC TC_pt = AT91C_BASE_TC0;
 	portCHAR xTaskWoken = pdFALSE;
 
-	ToggleLED(LED_1);
     if ( TC_pt->TC_SR & AT91C_TC_COVFS ){
     	g_currentToothPeriodOverflowCount++;
     	if (g_currentToothPeriodOverflowCount > TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING){
@@ -122,18 +118,19 @@ void triggerWheel_irq_handler(void)
 			//start tooth #1 with the current period
 			currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
 			//we're at a missing tooth- signal RPM/advance calculation task
-			xTaskWoken = xSemaphoreGiveFromISR( xOnRevolutionHandle, xTaskWoken );
 			g_engineIsRunning = 1;
 		}
 		currentTooth = 1;
+
 	}
 	else{
 		//we simply detected the next tooth
 		currentCrankRevolutionPeriodRaw+=currentInterToothPeriodRaw;			
-		currentTooth++;	
+		currentTooth++;
 	}
 	
 	if (wheelSynchronized){
+		if (currentTooth >= g_recalculateTooth) xTaskWoken = xSemaphoreGiveFromISR( xOnRevolutionHandle, xTaskWoken );
 		
 		unsigned int firePort = g_coilFirePort[currentTooth];
 		if (0 !=  firePort){

@@ -30,6 +30,7 @@ unsigned int 		g_currentDwellDegrees;
 unsigned int 		g_engineIsRunning;
 
 unsigned int		g_currentTooth;
+unsigned int 		g_recalculateTooth;
 unsigned int		g_coilDriversToFire;
 unsigned int		g_coilDriversToCharge;
 
@@ -203,11 +204,12 @@ static void initLogicalCoilDrivers(struct logical_coil_driver *logical_coil_driv
 //Update the cylinder runtime data based on the current ignition advance
 static void updateLogicalCoilDriverRuntimes(struct logical_coil_driver *logical_coil_drivers){
 
-	//todo optimize this? remove sizeof with constant?
 	memset(g_coilFirePort,0,sizeof(g_coilFirePort));
 	memset(g_coilFireTimerCount,0, sizeof(g_coilFireTimerCount));
 	memset(g_coilChargePort,0,sizeof(g_coilChargePort));
 	memset(g_coilChargeTimerCount,0,sizeof(g_coilChargeTimerCount));
+
+	g_recalculateTooth = 0;
 
 	int count = g_logicalCoilDriverCount;
 	
@@ -246,6 +248,12 @@ static void updateLogicalCoilDriverRuntimes(struct logical_coil_driver *logical_
 		logicalCoilPack->coilFireDegrees = coilFireDegrees;
 		logicalCoilPack->coilFireTooth = coilFireTooth;
 
+		//check and adjust what tooth we trigger the recalculation on
+		if (g_recalculateTooth < coilFireTooth + 1){
+			g_recalculateTooth = coilFireTooth + 1;
+			if (g_recalculateTooth >= CRANK_TEETH) g_recalculateTooth = 0;
+		}
+
 		g_coilFirePort[coilFireTooth] = logicalCoilPack->physicalCoilDriverPorts;
 		g_coilFireTimerCount[coilFireTooth] = timerFireCount;
 
@@ -261,7 +269,7 @@ static void updateLogicalCoilDriverRuntimes(struct logical_coil_driver *logical_
 
 		//the timer charge count is calculated one tooth ahead
 		//and compensated for trigger wheel IRQ hander overhead
-		unsigned int timerChargeCount = (coilInterToothPeriod - ISR_OVEREAD_TIMER_TICK_COUNTS + (periodPerDegree * coilOnInterToothDegrees)) / 4; // divide /4 = adjust for different timer clock
+		unsigned int timerChargeCount = coilInterToothPeriod - ISR_OVEREAD_TIMER_TICK_COUNTS + (periodPerDegree * coilOnInterToothDegrees);
 
 		//check if we've landed on the missing tooth (tooth zero)
 		//and roll over to the last tooth if necessary
@@ -316,6 +324,7 @@ static void initRuntimeData( void ){
 	g_toothCountAtLastSyncAttempt = 0;
 	g_wheelSyncAttempts = 0;
 	g_currentTooth  = 0;
+	g_recalculateTooth = CRANK_TEETH - 1;
 	g_wheelSynchronized = 0;
 	g_currentCrankRevolutionPeriodRaw = 0;
 	g_lastCrankRevolutionPeriodUSec = 0;
@@ -578,6 +587,7 @@ void onRevolutionTask(void *pvParameters){
 	while(1){
 		if ( xSemaphoreTake(xOnRevolutionHandle, 1) == pdTRUE){
 				ToggleLED(LED_2);
+				EnableLED(LED_1);
 				unsigned int crankPeriodUSec = calculateCrankPeriodUSec();
 				calculateRPM(crankPeriodUSec);
 				calculateDwellDegrees(crankPeriodUSec);
@@ -585,15 +595,9 @@ void onRevolutionTask(void *pvParameters){
 				g_currentLoad = 20;
 				calculateAdvance();
 
-
 				updateLogicalCoilDriverRuntimes(g_logical_coil_drivers);
-//				if (g_active_logical_coil_drivers == g_logical_coil_drivers[0]){
-	//				updateLogicalCoilDriverRuntimes(g_logical_coil_drivers[1]);
-		//		}
-			//	else{
-				//	updateLogicalCoilDriverRuntimes(g_logical_coil_drivers[0]);
-				//}
 //				updateUserOutputs();
+				DisableLED(LED_1);
 		}
 	}
 }
