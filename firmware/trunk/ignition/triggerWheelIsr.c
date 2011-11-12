@@ -28,7 +28,6 @@ extern unsigned int					g_coilChargeTimerCount[CRANK_TEETH];
 #define TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING 10
 
 
-//void coilPackCharge_irq_handler( void )__attribute__ ((interrupt ("IRQ")));
 void coilPackCharge_irq_handler(void )__attribute__ ((naked));
 void coilPackCharge_irq_handler(void){
 	
@@ -44,7 +43,6 @@ void coilPackCharge_irq_handler(void){
 	portRESTORE_CONTEXT();
 }
 
-//void coilPackFire_irq_handler( void )__attribute__ ((interrupt ("IRQ")));
 void coilPackFire_irq_handler(void )__attribute__ ((naked));
 void coilPackFire_irq_handler(void){
 
@@ -124,6 +122,7 @@ void triggerWheel_irq_handler(void)
 			//start over again
 			currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
 			g_wheelSyncAttempts++;
+			currentTooth = 0;
 		}
 		else{
 			//looks good, we counted the correct number of teeth
@@ -141,9 +140,19 @@ void triggerWheel_irq_handler(void)
 
 	}
 	else{
-		//we simply detected the next tooth
-		currentCrankRevolutionPeriodRaw+=currentInterToothPeriodRaw;			
 		currentTooth++;
+		if (currentTooth > CRANK_TEETH - 1 ){
+			//we counted too many teeth
+			wheelSynchronized = 0;
+			//start over again
+			currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
+			g_wheelSyncAttempts++;
+			currentTooth = 0;
+		}
+		else{
+			//we simply detected the next tooth
+			currentCrankRevolutionPeriodRaw+=currentInterToothPeriodRaw;
+		}
 	}
 	
 	if (wheelSynchronized){

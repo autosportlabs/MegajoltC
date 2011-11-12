@@ -618,20 +618,21 @@ void onRevolutionTask(void *pvParameters){
 	AT91F_PIO_CfgOutput( AT91C_BASE_PIOA, COILS_ENABLE );
 	AT91F_PIO_ClearOutput( AT91C_BASE_PIOA, COILS_ENABLE );
 
+
 	while(1){
 		if ( xSemaphoreTake(xOnRevolutionHandle, 1) == pdTRUE){
-				ToggleLED(LED_2);
-				EnableLED(LED_1);
-				unsigned int crankPeriodUSec = calculateCrankPeriodUSec();
-				calculateRPM(crankPeriodUSec);
-				calculateDwellDegrees(crankPeriodUSec);
-				g_lastCrankRevolutionPeriodUSec = crankPeriodUSec;
-				g_currentLoad = 20;
-				calculateAdvance();
+			ToggleLED(LED_2);
+			EnableLED(LED_1);
+			unsigned int crankPeriodUSec = calculateCrankPeriodUSec();
+			calculateRPM(crankPeriodUSec);
+			calculateDwellDegrees(crankPeriodUSec);
+			g_lastCrankRevolutionPeriodUSec = crankPeriodUSec;
+			g_currentLoad = 20;
+			calculateAdvance();
 
-				updateLogicalCoilDriverRuntimes(g_logical_coil_drivers);
-//				updateUserOutputs();
-				DisableLED(LED_1);
+			updateLogicalCoilDriverRuntimes(g_logical_coil_drivers);
+	//				updateUserOutputs();
+			DisableLED(LED_1);
 		}
 	}
 }
