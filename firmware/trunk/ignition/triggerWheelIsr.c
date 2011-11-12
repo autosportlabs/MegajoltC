@@ -106,9 +106,10 @@ void triggerWheel_irq_handler(void)
 	//detected the missing tooth
 	if (currentInterToothPeriodRaw > lastInterToothPeriodRaw + (lastInterToothPeriodRaw / 2)){
 
-		//found a missing tooth
+		//found maybe a missing tooth
 		//the missing tooth is 2x longer than normal - adjust the period
 		currentInterToothPeriodRaw = currentInterToothPeriodRaw / 2;
+
 		//missing tooth is tooth 'zero' 
 		//we detect the missing tooth by detecting the tooth following
 		g_toothCountAtLastSyncAttempt = currentTooth;
