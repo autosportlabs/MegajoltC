@@ -85,7 +85,8 @@ const short g_saved_Aux_caplibration[ADC_CALIBRATION_SIZE]    __attribute__((sec
 #define TC_CLKS_MCK1024          0x4
 
 
-extern void ( coilPack_irq_handler )( void );
+extern void ( coilPackCharge_irq_handler )( void );
+extern void ( coilPackFire_irq_handler ) ( void );
 extern void ( triggerWheel_irq_handler )( void );
 
 //*----------------------------------------------------------------------------
@@ -132,7 +133,7 @@ static void triggerWheelTimerInit( void )
 }
 
 
-static void coilPackTimerInit( void ){
+static void coilPackChargeTimerInit( void ){
 
 	AT91PS_TCB pTCB = AT91C_BASE_TCB;		// create a pointer to TC Global Register structure
 	pTCB->TCB_BCR = 0;						// SYNC trigger not used
@@ -153,12 +154,41 @@ static void coilPackTimerInit( void ){
 			AT91C_ID_TC2, 
 			TIMER1_INTERRUPT_LEVEL,
 			AT91C_AIC_SRCTYPE_INT_POSITIVE_EDGE, 
-			coilPack_irq_handler
+			coilPackCharge_irq_handler
 			);
 	
 	AT91C_BASE_TC2->TC_IER = AT91C_TC_CPCS;  	// IRQ enable RC compare
 	
 	AT91F_AIC_EnableIt (AT91C_BASE_AIC, AT91C_ID_TC2);
+}
+
+static void coilPackFireTimerInit( void ){
+
+	AT91PS_TCB pTCB = AT91C_BASE_TCB;		// create a pointer to TC Global Register structure
+	pTCB->TCB_BCR = 0;						// SYNC trigger not used
+
+
+	AT91F_TC_Open (
+	AT91C_BASE_TC1,
+
+	TC_CLKS_MCK8    |
+	AT91C_TC_WAVE   |
+	AT91C_TC_CPCSTOP
+
+	,AT91C_ID_TC1
+	);
+
+	AT91F_AIC_ConfigureIt (
+			AT91C_BASE_AIC,
+			AT91C_ID_TC1,
+			TIMER1_INTERRUPT_LEVEL,
+			AT91C_AIC_SRCTYPE_INT_POSITIVE_EDGE,
+			coilPackFire_irq_handler
+			);
+
+	AT91C_BASE_TC1->TC_IER = AT91C_TC_CPCS;  	// IRQ enable RC compare
+
+	AT91F_AIC_EnableIt (AT91C_BASE_AIC, AT91C_ID_TC1);
 }
 
 
@@ -251,7 +281,7 @@ static void updateLogicalCoilDriverRuntimes(struct logical_coil_driver *logical_
 		//check and adjust what tooth we trigger the recalculation on
 		if (g_recalculateTooth < coilFireTooth + 1){
 			g_recalculateTooth = coilFireTooth + 1;
-			if (g_recalculateTooth >= CRANK_TEETH) g_recalculateTooth = 0;
+			if (g_recalculateTooth >= CRANK_TEETH) g_recalculateTooth = 1;
 		}
 
 		g_coilFirePort[coilFireTooth] = logicalCoilPack->physicalCoilDriverPorts;
@@ -259,7 +289,9 @@ static void updateLogicalCoilDriverRuntimes(struct logical_coil_driver *logical_
 
 		//Calculate coil charging point
 		int coilOnDegrees = coilFireDegrees - g_currentDwellDegrees;
-		if ( coilOnDegrees < 0 ) coilOnDegrees = coilOnDegrees + MAX_DEGREES;
+		while( coilOnDegrees < 0 ){
+			coilOnDegrees = coilOnDegrees + MAX_DEGREES;
+		}
 
 		// we schedule  the charging one tooth ahead
 		int coilOnTooth = (coilOnDegrees / DEGREES_PER_TOOTH) - 1;
@@ -577,7 +609,9 @@ void onRevolutionTask(void *pvParameters){
 
 	portENTER_CRITICAL();
 	triggerWheelTimerInit();
-	coilPackTimerInit();
+	coilPackChargeTimerInit();
+	coilPackFireTimerInit();
+
 	enableIRQ();
 	portEXIT_CRITICAL();
 

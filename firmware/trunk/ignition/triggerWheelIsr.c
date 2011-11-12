@@ -27,20 +27,37 @@ extern unsigned int					g_coilChargeTimerCount[CRANK_TEETH];
 
 #define TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING 10
 
-void coilPack_irq_handler( void )__attribute__ ((interrupt ("IRQ")));
-void coilPack_irq_handler(void){
+
+//void coilPackCharge_irq_handler( void )__attribute__ ((interrupt ("IRQ")));
+void coilPackCharge_irq_handler(void )__attribute__ ((naked));
+void coilPackCharge_irq_handler(void){
 	
-	AT91C_BASE_PIOA->PIO_SODR = g_coilDriversToFire;
+	portSAVE_CONTEXT()
+
 	AT91C_BASE_PIOA->PIO_CODR = g_coilDriversToCharge;
-	g_coilDriversToFire = 0;
 	g_coilDriversToCharge = 0;		
 	
 	AT91C_BASE_AIC->AIC_EOICR = AT91C_BASE_TC2->TC_SR;      //  Interrupt Ack
 	AT91C_BASE_AIC->AIC_ICCR  = (1 << AT91C_ID_TC2);        //  Interrupt Ack
 
 	*AT91C_AIC_EOICR = 0;                                   // End of Interrupt
+	portRESTORE_CONTEXT();
 }
 
+//void coilPackFire_irq_handler( void )__attribute__ ((interrupt ("IRQ")));
+void coilPackFire_irq_handler(void )__attribute__ ((naked));
+void coilPackFire_irq_handler(void){
+
+	portSAVE_CONTEXT();
+	AT91C_BASE_PIOA->PIO_SODR = g_coilDriversToFire;
+	g_coilDriversToFire = 0;
+
+	AT91C_BASE_AIC->AIC_EOICR = AT91C_BASE_TC1->TC_SR;      //  Interrupt Ack
+	AT91C_BASE_AIC->AIC_ICCR  = (1 << AT91C_ID_TC1);        //  Interrupt Ack
+
+	*AT91C_AIC_EOICR = 0;                                   // End of Interrupt
+	portRESTORE_CONTEXT();
+}
 
 
 // Notes:
@@ -130,27 +147,25 @@ void triggerWheel_irq_handler(void)
 	}
 	
 	if (wheelSynchronized){
-		if (currentTooth >= g_recalculateTooth) xTaskWoken = xSemaphoreGiveFromISR( xOnRevolutionHandle, xTaskWoken );
+		if (currentTooth == g_recalculateTooth) xTaskWoken = xSemaphoreGiveFromISR( xOnRevolutionHandle, xTaskWoken );
 		
 		unsigned int firePort = g_coilFirePort[currentTooth];
 		if (0 !=  firePort){
+			//schedule the coil for firing
 			g_coilDriversToFire = firePort;
-			AT91C_BASE_TC2->TC_RC = g_coilFireTimerCount[currentTooth];
-			//Fire the coil
-			AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
-			goto trigger_wheel_irq_handler_end;
+			AT91C_BASE_TC1->TC_RC = g_coilFireTimerCount[currentTooth];
+			AT91C_BASE_TC1->TC_CCR = AT91C_TC_SWTRG;
 		}
 		
 		unsigned int chargePort = g_coilChargePort[currentTooth];
 		if (0 != chargePort){
+			//schedule the coil for charging
 			g_coilDriversToCharge = chargePort;
 			AT91C_BASE_TC2->TC_RC = g_coilChargeTimerCount[currentTooth];
 			AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
-			goto trigger_wheel_irq_handler_end;
 		}
 	}
 
-trigger_wheel_irq_handler_end:
 	g_currentToothPeriodOverflowCount = 0;
 	g_wheelSynchronized = wheelSynchronized;
 	g_currentTooth = currentTooth;
