@@ -8,7 +8,8 @@
 
 //the number of timer ticks representing the
 //trigger wheel ISR latency
-#define ISR_OVEREAD_TIMER_TICK_COUNTS		126
+//126
+#define ISR_OVEREAD_TIMER_TICK_COUNTS		210
 
 #define USER_OUTPUT_RPM_HYSTERESIS  		100
 #define USER_OUTPUT_LOAD_HYSTERESIS 		2
@@ -19,6 +20,7 @@
 #define CRANKING_REVOLUTION_PERIOD_RAW		3003427 //480 RPM
 #define MAX_DWELL_DEGREES					300
 #define COIL_DRIVERS						8
+#define DEFAULT_LOCKED_ADVANCE				10
 
 #define COILS_ENABLE (1 << 4)
 //Map coils to various PIOs
@@ -46,23 +48,13 @@ struct logical_coil_driver{
 
 };
 
-#define IGNITION_COMMANDS \
-		{"getRuntime", "Outputs a delimited list of runtime values.","getRuntime", getRuntime}, \
-		{"getDebug", "Output debug values.","getDebug", getDebug}, \
-		{"setIgnCell","Sets an ignition map cell.","setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell}, \
-		{"setIgnRpmBin", "Sets an ignition map RPM bin.","setIgnRpmBin <rpmBin> <value>", setIgnitionRPMBin}, \
-		{"setIgnLoadBin", "Sets an ignition map load bin.,","setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin}, \
-		{"getEngineCfg", "Gets the current engine configuration.","getEngineCfg", getEngineConfig}, \
-		{"getIgnRpmBins", "Gets the currently active ignition RPM bins.","getIgnRpmBins", getRpmBins}, \
-		{"getIgnLoadBins", "Gets the currently active load bins.","getIgnLoadBins", getLoadBins}, \
-		{"getIgnMap", "Gets the currently active ignition map, in RPM x Load format.","getIgnMap", getIgnMap}, \
-		{"getUserOutCfg", "Gets the currently active user output configuration.","getUserOutcfg <output>", getUserOutCfg}, \
-		{"setUserOutCfg", "Sets the currently active user output configuration.","setUserOutcfg <output> <type> <mode> <trigger>", getUserOutCfg} \
 
 //On revolution
 void onRevolutionTask(void *);
 
 
+void enableLockedAdvance(unsigned int argc, char **argv);
+void disableLockedAdvance(unsigned int argc, char **argv);
 void getRuntime(unsigned int argc, char **argv);
 void getDebug(unsigned int argc, char **argv);
 void setIgnitionCell(unsigned int argc, char **argv);
@@ -74,5 +66,26 @@ void getLoadBins(unsigned int argc, char **argv);
 void getIgnMap(unsigned int argc, char **argv);
 void getUserOutCfg(unsigned int argc, char **argv);
 void setUserOutCfg(unsigned int argc, char **argv);
+void terminateOS(unsigned int argc, char **argv);
+void suspendOS(unsigned int argc, char **argv);
+void resumeOS(unsigned int argc, char **argv);
+
+#define IGNITION_COMMANDS \
+		{"getRuntime", "Outputs a delimited list of runtime values.","getRuntime", getRuntime}, \
+		{"getDebug", "Output debug values.","getDebug", getDebug}, \
+		{"setIgnCell","Sets an ignition map cell.","setIgnCell <rpmBin> <loadBin> <advance>", setIgnitionCell}, \
+		{"setIgnRpmBin", "Sets an ignition map RPM bin.","setIgnRpmBin <rpmBin> <value>", setIgnitionRPMBin}, \
+		{"setIgnLoadBin", "Sets an ignition map load bin.,","setIgnLoadBin <rpmBin> <value>", setIgnitionLoadBin}, \
+		{"getEngineCfg", "Gets the current engine configuration.","getEngineCfg", getEngineConfig}, \
+		{"getIgnRpmBins", "Gets the currently active ignition RPM bins.","getIgnRpmBins", getRpmBins}, \
+		{"getIgnLoadBins", "Gets the currently active load bins.","getIgnLoadBins", getLoadBins}, \
+		{"getIgnMap", "Gets the currently active ignition map, in RPM x Load format.","getIgnMap", getIgnMap}, \
+		{"getUserOutCfg", "Gets the currently active user output configuration.","getUserOutcfg <output>", getUserOutCfg}, \
+		{"setUserOutCfg", "Sets the currently active user output configuration.","setUserOutcfg <output> <type> <mode> <trigger>", getUserOutCfg}, \
+		{"enLockedAdv", "Enables locking of ignition advance","<advance>", enableLockedAdvance}, \
+		{"disLockedAdv", "Disabled locking ignition advance","",disableLockedAdvance}, \
+		{"terminateOS", "","",terminateOS}, \
+		{"suspendOS","","",suspendOS}, \
+		{"resumeOS","","",resumeOS}
 
 #endif /*RUNTIME_H_*/

@@ -20,6 +20,8 @@ unsigned int		g_lastCrankRevolutionPeriodUSec;
 unsigned int 		g_lastInterToothPeriodRaw;
 unsigned int 		g_currentToothPeriodOverflowCount;
 unsigned int 		g_wheelSynchronized;
+unsigned int		g_lockedAdvanceEnabled;
+int					g_lockedAdvance;
 unsigned int 		g_currentRPM;
 unsigned int		g_currentDwellUSec;
 unsigned int 		g_currentLoad;
@@ -28,6 +30,7 @@ unsigned int 		g_currentRPMBin;
 int 				g_currentAdvance;
 unsigned int 		g_currentDwellDegrees;
 unsigned int 		g_engineIsRunning;
+
 
 unsigned int		g_currentTooth;
 unsigned int 		g_recalculateTooth;
@@ -71,8 +74,8 @@ const short g_saved_Aux_caplibration[ADC_CALIBRATION_SIZE]    __attribute__((sec
 
 
 
-#define TIMER0_INTERRUPT_LEVEL		5
-#define TIMER1_INTERRUPT_LEVEL		7
+#define COIL_PACK_INTERRUPT_LEVEL		7
+#define TRIGGER_WHEEL_INTERRUPT_LEVEL	6
 
 /*-----------------*/
 /* Clock Selection */
@@ -125,7 +128,7 @@ static void triggerWheelTimerInit( void )
 	,AT91C_ID_TC0
 	);
 
-	AT91F_AIC_ConfigureIt ( AT91C_BASE_AIC, AT91C_ID_TC0, TIMER0_INTERRUPT_LEVEL,AT91C_AIC_SRCTYPE_EXT_NEGATIVE_EDGE, triggerWheel_irq_handler);
+	AT91F_AIC_ConfigureIt ( AT91C_BASE_AIC, AT91C_ID_TC0, TRIGGER_WHEEL_INTERRUPT_LEVEL,AT91C_AIC_SRCTYPE_EXT_NEGATIVE_EDGE, triggerWheel_irq_handler);
 
 	AT91C_BASE_TC0->TC_IER = AT91C_TC_COVFS | AT91C_TC_LDRBS;  //  IRQ enable RB loading
 	
@@ -152,7 +155,7 @@ static void coilPackChargeTimerInit( void ){
 	AT91F_AIC_ConfigureIt (
 			AT91C_BASE_AIC, 
 			AT91C_ID_TC2, 
-			TIMER1_INTERRUPT_LEVEL,
+			COIL_PACK_INTERRUPT_LEVEL,
 			AT91C_AIC_SRCTYPE_INT_POSITIVE_EDGE, 
 			coilPackCharge_irq_handler
 			);
@@ -181,7 +184,7 @@ static void coilPackFireTimerInit( void ){
 	AT91F_AIC_ConfigureIt (
 			AT91C_BASE_AIC,
 			AT91C_ID_TC1,
-			TIMER1_INTERRUPT_LEVEL,
+			COIL_PACK_INTERRUPT_LEVEL,
 			AT91C_AIC_SRCTYPE_INT_POSITIVE_EDGE,
 			coilPackFire_irq_handler
 			);
@@ -368,6 +371,8 @@ static void initRuntimeData( void ){
 	g_currentLoadBin = 0;
 	g_currentRPMBin = 0;
 	g_engineIsRunning = 0;
+	g_lockedAdvanceEnabled = 0;
+	g_lockedAdvance = DEFAULT_LOCKED_ADVANCE;
 	g_currentDwellUSec = DEFAULT_DWELL_USEC;
 	g_currentAdvance = g_active_engine_config.cranking_degrees;
 	g_lastCrankRevolutionPeriodRaw = CRANKING_REVOLUTION_PERIOD_RAW;
@@ -452,6 +457,10 @@ int linearInterpolate(int x, int x1, int y1, int x2, int y2){
 //calculate the ignition advance
 void calculateAdvance(){
 
+	if (g_lockedAdvanceEnabled){
+		g_currentAdvance = g_lockedAdvance;
+		return;
+	}
 	//Local variable declarations
 
 	//local copies of current RPM and current Load values	
@@ -643,6 +652,19 @@ void onRevolutionTask(void *pvParameters){
 void SendResult(int success){
 	SendNameInt("result",success);
 	SendCrlf();
+}
+
+void enableLockedAdvance(unsigned int argc, char **argv){
+	if (argc > 1){
+		g_lockedAdvance = modp_atoi(argv[1]);
+	}
+	g_lockedAdvanceEnabled = 1;
+	SendResult(1);
+}
+
+void disableLockedAdvance(unsigned int argc, char **argv){
+	g_lockedAdvanceEnabled = 0;
+	SendResult(1);
 }
 
 void setIgnitionCell(unsigned int argc, char **argv){
@@ -949,7 +971,17 @@ void getDebug(unsigned int argc, char **argv){
 	SendCrlf();
 }
 
+void terminateOS(unsigned int argc, char **argv){
+	portENTER_CRITICAL();
+}
 
+void suspendOS(unsigned int argc, char **argv){
+	vTaskSuspendAll();
+}
+
+void resumeOS(unsigned int argc, char **argv){
+	xTaskResumeAll();
+}
 
 
 
