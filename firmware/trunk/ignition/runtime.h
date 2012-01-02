@@ -9,7 +9,8 @@
 //the number of timer ticks representing the
 //trigger wheel ISR latency
 //126
-#define ISR_OVEREAD_TIMER_TICK_COUNTS		210
+//210
+#define ISR_OVEREAD_TIMER_TICK_COUNTS		1050
 
 #define USER_OUTPUT_RPM_HYSTERESIS  		100
 #define USER_OUTPUT_LOAD_HYSTERESIS 		2
@@ -69,6 +70,7 @@ void setUserOutCfg(unsigned int argc, char **argv);
 void terminateOS(unsigned int argc, char **argv);
 void suspendOS(unsigned int argc, char **argv);
 void resumeOS(unsigned int argc, char **argv);
+void startTwInterrupt(unsigned int argc, char **argv);
 
 #define IGNITION_COMMANDS \
 		{"getRuntime", "Outputs a delimited list of runtime values.","getRuntime", getRuntime}, \
@@ -86,6 +88,7 @@ void resumeOS(unsigned int argc, char **argv);
 		{"disLockedAdv", "Disabled locking ignition advance","",disableLockedAdvance}, \
 		{"terminateOS", "","",terminateOS}, \
 		{"suspendOS","","",suspendOS}, \
-		{"resumeOS","","",resumeOS}
+		{"resumeOS","","",resumeOS}, \
+		{"startInt","","",startTwInterrupt}
 
 #endif /*RUNTIME_H_*/

@@ -18,6 +18,7 @@ unsigned int		g_currentCrankRevolutionPeriodRaw;
 unsigned int 		g_lastCrankRevolutionPeriodRaw;
 unsigned int		g_lastCrankRevolutionPeriodUSec;
 unsigned int 		g_lastInterToothPeriodRaw;
+unsigned int 		g_currentInterToothPeriodRaw;
 unsigned int 		g_currentToothPeriodOverflowCount;
 unsigned int 		g_wheelSynchronized;
 unsigned int		g_lockedAdvanceEnabled;
@@ -365,6 +366,7 @@ static void initRuntimeData( void ){
 	g_lastCrankRevolutionPeriodUSec = 0;
 	g_lastCrankRevolutionPeriodRaw = 0;
 	g_lastInterToothPeriodRaw = 0;
+	g_currentInterToothPeriodRaw = 0;
 	g_currentToothPeriodOverflowCount = 0;
 	g_currentRPM = 0;
 	g_currentLoad = 0;
@@ -606,6 +608,19 @@ void calculateAdvance(){
 	g_currentRPMBin = rpmBin;
 }
 
+void onRevoluationCalculation(){
+	ToggleLED(LED_2);
+
+	unsigned int crankPeriodUSec = calculateCrankPeriodUSec();
+	calculateRPM(crankPeriodUSec);
+	calculateDwellDegrees(crankPeriodUSec);
+	g_lastCrankRevolutionPeriodUSec = crankPeriodUSec;
+	g_currentLoad = 20;
+	calculateAdvance();
+
+	updateLogicalCoilDriverRuntimes(g_logical_coil_drivers);
+//				updateUserOutputs();
+}
 
 
 void onRevolutionTask(void *pvParameters){
@@ -630,18 +645,96 @@ void onRevolutionTask(void *pvParameters){
 
 	while(1){
 		if ( xSemaphoreTake(xOnRevolutionHandle, 1) == pdTRUE){
-			ToggleLED(LED_2);
-			EnableLED(LED_1);
-			unsigned int crankPeriodUSec = calculateCrankPeriodUSec();
-			calculateRPM(crankPeriodUSec);
-			calculateDwellDegrees(crankPeriodUSec);
-			g_lastCrankRevolutionPeriodUSec = crankPeriodUSec;
-			g_currentLoad = 20;
-			calculateAdvance();
 
-			updateLogicalCoilDriverRuntimes(g_logical_coil_drivers);
-	//				updateUserOutputs();
+			unsigned int currentTooth = g_currentTooth;
+			unsigned int currentInterToothPeriodRaw = g_currentInterToothPeriodRaw;
+			unsigned int lastInterToothPeriodRaw = g_lastInterToothPeriodRaw;
+			unsigned int wheelSynchronized = g_wheelSynchronized;
+			unsigned int currentCrankRevolutionPeriodRaw = g_currentCrankRevolutionPeriodRaw;
+
+			//if the inter-tooth period is more than 1.5 times the last tooth, we
+			//detected the missing tooth
+			if (currentInterToothPeriodRaw > lastInterToothPeriodRaw + (lastInterToothPeriodRaw / 2)){
+
+				//found maybe a missing tooth
+				//the missing tooth is 2x longer than normal - adjust the period
+				currentInterToothPeriodRaw = currentInterToothPeriodRaw / 2;
+
+				//missing tooth is tooth 'zero'
+				//we detect the missing tooth by detecting the tooth following
+				g_toothCountAtLastSyncAttempt = currentTooth;
+
+				if (currentTooth != CRANK_TEETH - 1){
+					//we either:
+					//1. had a partial tooth count - first time cranking or power-up
+					//2. we had noise - extra pulses
+					//3. we missed a tooth
+					wheelSynchronized = 0;
+					//start over again
+					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
+					g_wheelSyncAttempts++;
+					currentTooth = 0;
+				}
+				else{
+					//looks good, we counted the correct number of teeth
+					//before the missing tooth: we're synchronized to the
+					//crank trigger
+					wheelSynchronized = 1;
+					//save the last period
+					g_lastCrankRevolutionPeriodRaw = currentCrankRevolutionPeriodRaw + currentInterToothPeriodRaw;
+					//start tooth #1 with the current period
+					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
+					//we're at a missing tooth- signal RPM/advance calculation task
+					g_engineIsRunning = 1;
+				}
+				currentTooth = 1;
+
+			}
+			else{
+				currentTooth++;
+				if (currentTooth > CRANK_TEETH - 1 ){
+					//we counted too many teeth
+					wheelSynchronized = 0;
+					//start over again
+					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
+					g_wheelSyncAttempts++;
+					currentTooth = 0;
+				}
+				else{
+					//we simply detected the next tooth
+					currentCrankRevolutionPeriodRaw += currentInterToothPeriodRaw;
+				}
+			}
+
+			if (wheelSynchronized){
+
+				unsigned int firePort = g_coilFirePort[currentTooth];
+				if (0 !=  firePort){
+					EnableLED(LED_1);
+					//schedule the coil for firing
+					g_coilDriversToFire = firePort;
+					AT91C_BASE_TC1->TC_RC = g_coilFireTimerCount[currentTooth];
+					AT91C_BASE_TC1->TC_CCR = AT91C_TC_SWTRG;
+				}
+
+				unsigned int chargePort = g_coilChargePort[currentTooth];
+				if (0 != chargePort){
+					//schedule the coil for charging
+					g_coilDriversToCharge = chargePort;
+					AT91C_BASE_TC2->TC_RC = g_coilChargeTimerCount[currentTooth];
+					AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
+				}
+			}
+
+			g_currentToothPeriodOverflowCount = 0;
+			g_wheelSynchronized = wheelSynchronized;
+			g_currentTooth = currentTooth;
+			g_lastInterToothPeriodRaw = currentInterToothPeriodRaw;
+			g_currentCrankRevolutionPeriodRaw = currentCrankRevolutionPeriodRaw;
+
+			if (currentTooth == g_recalculateTooth) onRevoluationCalculation();
 			DisableLED(LED_1);
+
 		}
 	}
 }
@@ -981,6 +1074,14 @@ void suspendOS(unsigned int argc, char **argv){
 
 void resumeOS(unsigned int argc, char **argv){
 	xTaskResumeAll();
+}
+
+void startTwInterrupt(unsigned int argc, char **argv){
+
+	SendString("Before TriggerWheel Timer Init");
+	triggerWheelTimerInit();
+	SendString("after TriggerWheel Timer Init");
+	SendCrlf();
 }
 
 

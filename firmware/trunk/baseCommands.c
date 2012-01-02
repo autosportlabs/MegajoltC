@@ -8,8 +8,10 @@
 #include "usb_comm.h"
 #include "task.h"
 
+
 void ShowTaskInfo(unsigned int argc, char **argv){
 
+#if (configUSE_TRACE_FACILITY == 1)
 	SendString("Task Info");
 	SendCrlf();
 	SendString("Status\tPri\tStack\tTask#\tName");
@@ -18,4 +20,9 @@ void ShowTaskInfo(unsigned int argc, char **argv){
 	vTaskList(taskList);
 	SendString(taskList);
 	SendCrlf();
+#else
+	SendString("Trace not enabled in Kernel. Recompile with configUSE_TRACE_FACILITY 1");
+#endif
+
 }
+
