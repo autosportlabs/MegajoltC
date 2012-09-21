@@ -1,0 +1,3 @@
+[submodule "firmware/SAM7s_base"]
+	path = firmware/SAM7s_base
+	url = git@github.com:autosportlabs/SAM7s_base_private.git
