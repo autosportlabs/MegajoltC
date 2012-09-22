@@ -7,7 +7,6 @@
 #include "usb_comm.h"
 #include "string.h"
 #include "memory.h"
-#include "base64.h"
 #include "lib_AT91SAM7S256.h"
 
 
