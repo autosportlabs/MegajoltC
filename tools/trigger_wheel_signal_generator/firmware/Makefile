@@ -92,7 +92,6 @@ $(USB_SRC_DIR)/source/USB-CDC.c \
 $(SERIAL_SRC_DIR)/usart.c \
 $(UTIL_DIR)/modp_numtoa.c \
 $(UTIL_DIR)/modp_atonum.c \
-$(UTIL_DIR)/base64.c \
 $(MEMORY_SRC_DIR)/memory.c \
 $(LUA_SRC_DIR)/luaTask.c \
 $(LUA_SRC_DIR)/luaBaseBinding.c \
@@ -140,16 +139,16 @@ OPT = 0
 # AVR (extended) COFF requires stabs, plus an avr-objcopy run.
 #DEBUG = stabs
 #DEBUG = dwarf-2
-#DEBUG = -g
-DEBUG = 
+DEBUG = -g
+
 
 # List any extra directories to look for include files here.
 #     Each directory must be seperated by a space.
-EXTRAINCDIRS =  ../lua/src
+EXTRAINCDIRS =  SAM7s_lua/src
 
 # List any extra directories to look for library files here.
 #     Each directory must be seperated by a space.
-EXTRA_LIBDIRS = ../lua/src
+EXTRA_LIBDIRS = SAM7s_lua/src
 
 # Compiler flag to set the C Standard level.
 # c89   - "ANSI" C
