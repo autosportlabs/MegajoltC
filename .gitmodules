@@ -1,3 +1,6 @@
 [submodule "firmware/SAM7s_base"]
 	path = firmware/SAM7s_base
 	url = git@github.com:autosportlabs/SAM7s_base_private.git
+[submodule "tools/trigger_wheel_signal_generator/firmware/SAM7s_base"]
+	path = tools/trigger_wheel_signal_generator/firmware/SAM7s_base
+	url = git@github.com:autosportlabs/SAM7s_base_private.git
