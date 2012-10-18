@@ -642,6 +642,8 @@ void onRevolutionTask(void *pvParameters){
 	AT91F_PIO_CfgOutput( AT91C_BASE_PIOA, COILS_ENABLE );
 	AT91F_PIO_ClearOutput( AT91C_BASE_PIOA, COILS_ENABLE );
 
+	DisableLED(LED_1);
+	DisableLED(LED_2);
 
 	while(1){
 		if ( xSemaphoreTake(xOnRevolutionHandle, 1) == pdTRUE){
@@ -686,6 +688,7 @@ void onRevolutionTask(void *pvParameters){
 					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
 					//we're at a missing tooth- signal RPM/advance calculation task
 					g_engineIsRunning = 1;
+					EnableLED(LED_1);
 				}
 				currentTooth = 1;
 
@@ -699,6 +702,7 @@ void onRevolutionTask(void *pvParameters){
 					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
 					g_wheelSyncAttempts++;
 					currentTooth = 0;
+					DisableLED(LED_1);
 				}
 				else{
 					//we simply detected the next tooth
@@ -710,7 +714,6 @@ void onRevolutionTask(void *pvParameters){
 
 				unsigned int firePort = g_coilFirePort[currentTooth];
 				if (0 !=  firePort){
-					EnableLED(LED_1);
 					//schedule the coil for firing
 					g_coilDriversToFire = firePort;
 					AT91C_BASE_TC1->TC_RC = g_coilFireTimerCount[currentTooth];
@@ -733,8 +736,6 @@ void onRevolutionTask(void *pvParameters){
 			g_currentCrankRevolutionPeriodRaw = currentCrankRevolutionPeriodRaw;
 
 			if (currentTooth == g_recalculateTooth) onRevoluationCalculation();
-			DisableLED(LED_1);
-
 		}
 	}
 }

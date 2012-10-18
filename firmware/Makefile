@@ -33,7 +33,7 @@
 
 # MCU name and submodel
 MCU      = arm7tdmi
-SUBMDL   = AT91SAM7S256
+SUBMDL   = AT91SAM7S321
 #SUBMDL   = AT91SAM7S64
 THUMB    = -mthumb
 THUMB_IW = -mthumb-interwork
