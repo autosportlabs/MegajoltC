@@ -94,6 +94,7 @@ $(USB_SRC_DIR)/source/USB-CDC.c \
 $(SERIAL_SRC_DIR)/usart.c \
 $(UTIL_DIR)/modp_numtoa.c \
 $(UTIL_DIR)/modp_atonum.c \
+$(UTIL_DIR)/mod_string.c \
 $(MEMORY_SRC_DIR)/memory.c \
 $(RTOS_PORT_DIR)/MemMang/heap_2_combine.c \
 $(IO_SRC_DIR)/io.c \
@@ -194,7 +195,7 @@ CFLAGS += -fomit-frame-pointer
 CFLAGS += -Wcast-align -Wimplicit 
 CFLAGS += -Wpointer-arith -Wswitch
 CFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
-CFLAGS += -ffunction-sections -fdata-sections
+CFLAGS += -ffunction-sections -fdata-sections 
 #CFLAGS += -Wno-strict-aliasing -Wextra
 CFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<) 
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))

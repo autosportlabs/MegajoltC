@@ -8,23 +8,13 @@
 
 
 extern xSemaphoreHandle 			xOnRevolutionHandle;
-extern unsigned int					g_currentCrankRevolutionPeriodRaw;
-extern unsigned int 				g_lastCrankRevolutionPeriodRaw;
 extern unsigned int 				g_currentToothPeriodOverflowCount;
 extern unsigned int 				g_currentInterToothPeriodRaw;
-extern unsigned int 				g_lastInterToothPeriodRaw;
 extern unsigned int					g_coilDriversToFire;
 extern unsigned int					g_coilDriversToCharge;
-extern unsigned int					g_currentTooth;
 extern unsigned int 				g_engineIsRunning;
-extern unsigned int					g_toothCountAtLastSyncAttempt;
 extern unsigned int					g_wheelSyncAttempts;
 extern unsigned int 				g_wheelSynchronized;
-extern unsigned int 				g_recalculateTooth;
-extern unsigned int 				g_coilFirePort[CRANK_TEETH];
-extern unsigned int					g_coilFireTimerCount[CRANK_TEETH];
-extern unsigned int					g_coilChargePort[CRANK_TEETH];
-extern unsigned int					g_coilChargeTimerCount[CRANK_TEETH];
 
 #define TRIGGER_WHEEL_OVERFLOW_THRESHOLD_ENGINE_NOT_RUNNING 10
 
@@ -103,7 +93,7 @@ void triggerWheel_irq_handler(void)
     }
     else{
         g_currentInterToothPeriodRaw = ((g_currentToothPeriodOverflowCount << 16) + TC_pt->TC_RB);
-        xTaskWoken = xSemaphoreGiveFromISR( xOnRevolutionHandle, xTaskWoken );;
+        xTaskWoken = xSemaphoreGiveFromISR( xOnRevolutionHandle, xTaskWoken );
     }
 
 	AT91F_AIC_AcknowledgeIt (AT91C_BASE_AIC);

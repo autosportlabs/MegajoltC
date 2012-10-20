@@ -39,23 +39,25 @@
 #define TC_CLKS_MCK1024          0x4
 
 /* Priorities for the demo application tasks. */
-#define USB_COMM_TASK_PRIORITY				( tskIDLE_PRIORITY + 2 )
+#define USB_COMM_TASK_PRIORITY				( tskIDLE_PRIORITY + 1 )
 #define mainUSB_PRIORITY					( tskIDLE_PRIORITY + 1 )
 #define mainDEFAULT_TASK_PRIORITY 			( tskIDLE_PRIORITY + 1 )
-#define mainON_TOOTH_TASK_PRIORITY          ( tskIDLE_PRIORITY + 4 )
-#define mainON_REVOLUTION_TASK_PRIORITY     ( tskIDLE_PRIORITY + 3 )
+#define mainON_REVOLUTION_TASK_PRIORITY     ( tskIDLE_PRIORITY + 2 )
 
 #define mainUSB_TASK_STACK					( 200 )
 #define mainUSB_COMM_STACK					( 200 )
-#define mainON_REVOLUTION_STACK				( 500 )
+#define mainON_REVOLUTION_STACK				( 200 )
 
 #define mainNO_ERROR_FLASH_PERIOD			( ( portTickType ) 1000 / portTICK_RATE_MS  )
 #define mainBUSY_FLASH_PERIOD				( ( portTickType ) 500 / portTICK_RATE_MS )
 #define mainERROR_FLASH_PERIOD				( ( portTickType ) 100 / portTICK_RATE_MS  )
 #define mainDATA_DEBUG_PERIOD				( ( portTickType ) 100 / portTICK_RATE_MS  )
 
-#define FATAL_ERROR_SCHEDULER	1
-#define FATAL_ERROR_HARDWARE	2
+#define FATAL_ERROR_SCHEDULER			1
+#define FATAL_ERROR_HARDWARE			2
+#define FATAL_ERROR_USB_TASK			3
+#define FATAL_ERROR_USBCOMM_TASK 		4
+#define FATAL_ERROR_ON_REVOLUTION_TASK 	5
 
 /* ADC field definition for the Mode Register: Reminder
                        TRGEN    => Selection bewteen Software or hardware start of conversion
@@ -110,30 +112,18 @@ static int setupHardware( void )
  }
 
 
-void fatalError(int type){
+void fatalError(int count){
 	
-	int count;
 	int pause = 5000000;
 	int flash = 1000000;
-	
-	switch (type){
-		case FATAL_ERROR_HARDWARE: 	
-			count = 1;
-			break;
-		case FATAL_ERROR_SCHEDULER:
-			count = 2;
-			break;
-		default:
-			count = 3;
-	}
-	
+
 	while(1){
 		for (int c = 0; c < count; c++){
-			//TODO EnableLED(LED1);
-			//TODO EnableLED(LED2);
+			EnableLED(LED_1);
+			EnableLED(LED_2);
 			for (int i=0;i<flash;i++){}
-			//TODO DisableLED(LED1);
-			//TODO DisableLED(LED2);
+			DisableLED(LED_1);
+			DisableLED(LED_2);
 			for (int i=0;i<flash;i++){}
 		}
 		for (int i=0;i<pause;i++){}	
@@ -153,10 +143,16 @@ int main( void )
 	int success = setupHardware();
 	if (! success) fatalError(FATAL_ERROR_HARDWARE);
 
-	xTaskCreate( vUSBCDCTask,	( signed portCHAR * ) "USB", 			mainUSB_TASK_STACK, 		NULL, 	mainUSB_PRIORITY, 			NULL );
-	xTaskCreate( onUSBCommTask,	( signed portCHAR * ) "OnUSBComm", 		mainUSB_COMM_STACK, 		NULL, 	USB_COMM_TASK_PRIORITY, 	NULL );
+	if (pdPASS != xTaskCreate( vUSBCDCTask,	( signed portCHAR * ) "USB", 			mainUSB_TASK_STACK, 		NULL, 	mainUSB_PRIORITY, 			NULL )){
+		fatalError(FATAL_ERROR_USB_TASK);
+	}
+	if (pdPASS != xTaskCreate( onUSBCommTask,	( signed portCHAR * ) "OnUSBComm", 		mainUSB_COMM_STACK, 		NULL, 	USB_COMM_TASK_PRIORITY, 	NULL )){
+		fatalError(FATAL_ERROR_USBCOMM_TASK);
+	}
 	StartIOTasks();
-	xTaskCreate(onRevolutionTask, ( signed portCHAR *) "OnRevolution",      mainON_REVOLUTION_STACK,        NULL,   mainON_REVOLUTION_TASK_PRIORITY, NULL);
+	if (pdPASS != xTaskCreate(onRevolutionTask, ( signed portCHAR *) "OnRevolution",      mainON_REVOLUTION_STACK,        NULL,   mainON_REVOLUTION_TASK_PRIORITY, NULL)){
+		fatalError(FATAL_ERROR_ON_REVOLUTION_TASK);
+	}
 #ifdef LUA_ENABLED
 	InitLuaCommands();
 	startLuaTask();

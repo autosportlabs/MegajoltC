@@ -11,7 +11,7 @@
 #include "command.h"
 #include "runtime.h"
 
-#define FIRMWARE_VERSION "1.0.0.0"
+#define FIRMWARE_VERSION "0.0.1"
 #define WELCOME_MSG "Welcome to Megaolt/C : Firmware Version " FIRMWARE_VERSION
 #define COMMAND_PROMPT "Megajolt/C"
 

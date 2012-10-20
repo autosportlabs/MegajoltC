@@ -1,4 +1,4 @@
-#include <string.h>
+
 
 #include "runtime.h"
 #include "USB-CDC.h"
@@ -7,6 +7,7 @@
 #include "io.h"
 #include "usb_comm.h"
 #include "modp_atonum.h"
+#include "mod_string.h"
 
 xSemaphoreHandle 			xOnRevolutionHandle;
 
@@ -68,10 +69,10 @@ const struct ignition_config g_saved_ignition_config[IGNITION_CONFIGS] __attribu
 const struct engine_config g_saved_engine_config __attribute__((section(".text\n\t#"))) = DEFAULT_ENGINE_CONFIG;
 
 //ADC Calibrations
-const short g_saved_MAP_caplibration[ADC_CALIBRATION_SIZE]  __attribute__((section(".text\n\t#"))) = DEFAULT_MAP_CALIBRATION;
-const short g_saved_TPS_caplibration[ADC_CALIBRATION_SIZE]  __attribute__((section(".text\n\t#"))) = DEFAULT_GENERIC_CALIBRATION;
-const short g_saved_Temp_caplibration[ADC_CALIBRATION_SIZE] __attribute__((section(".text\n\t#"))) = DEFAULT_TEMP_CALIBRATION;
-const short g_saved_Aux_caplibration[ADC_CALIBRATION_SIZE]    __attribute__((section(".text\n\t#"))) = DEFAULT_GENERIC_CALIBRATION;
+const short g_saved_MAP_calibration[ADC_CALIBRATION_SIZE]  __attribute__((section(".text\n\t#"))) = DEFAULT_MAP_CALIBRATION;
+const short g_saved_TPS_calibration[ADC_CALIBRATION_SIZE]  __attribute__((section(".text\n\t#"))) = DEFAULT_GENERIC_CALIBRATION;
+const short g_saved_Temp_calibration[ADC_CALIBRATION_SIZE] __attribute__((section(".text\n\t#"))) = DEFAULT_TEMP_CALIBRATION;
+const short g_saved_Aux_calibration[ADC_CALIBRATION_SIZE]    __attribute__((section(".text\n\t#"))) = DEFAULT_GENERIC_CALIBRATION;
 
 
 
