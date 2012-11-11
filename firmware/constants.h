@@ -17,7 +17,7 @@
 
 //#define LUA_ENABLED
 
-#define SYSTEM_COMMANDS {BASE_COMMANDS, IGNITION_COMMANDS, NULL_COMMAND}
+#define SYSTEM_COMMANDS {BASE_COMMANDS, IGNITION_COMMANDS,  NULL_COMMAND}
 
 //USB manufacturer string descriptor
 //first element = length of this entire array, in bytes

@@ -1,15 +1,12 @@
 
 
 #include "runtime.h"
-#include "USB-CDC.h"
 #include "board.h"
-#include "interrupt_utils.h"
 #include "io.h"
-#include "usb_comm.h"
 #include "modp_atonum.h"
 #include "mod_string.h"
-
-xSemaphoreHandle 			xOnRevolutionHandle;
+#include "comm.h"
+#include "interrupt_utils.h"
 
 //****************************************************
 //Runtime data
@@ -21,8 +18,6 @@ unsigned int		g_lastCrankRevolutionPeriodUSec;
 unsigned int 		g_lastInterToothPeriodRaw;
 unsigned int 		g_currentInterToothPeriodRaw;
 unsigned int 		g_currentToothPeriodOverflowCount;
-unsigned int 		g_wheelSynchronized;
-unsigned int		g_lockedAdvanceEnabled;
 int					g_lockedAdvance;
 unsigned int 		g_currentRPM;
 unsigned int		g_currentDwellUSec;
@@ -47,6 +42,10 @@ unsigned int		g_coilChargeTimerCount[CRANK_TEETH];
 struct logical_coil_driver 	g_logical_coil_drivers[MAX_COIL_DRIVERS];
 unsigned int		g_logicalCoilDriverCount;
 
+//flags
+unsigned int 		g_wheelSynchronized;
+unsigned int		g_lockedAdvanceEnabled;
+unsigned int		g_recalculatePending;
 
 //****************************************************
 
@@ -90,9 +89,9 @@ const short g_saved_Aux_calibration[ADC_CALIBRATION_SIZE]    __attribute__((sect
 #define TC_CLKS_MCK1024          0x4
 
 
-extern void ( coilPackCharge_irq_handler )( void );
-extern void ( coilPackFire_irq_handler ) ( void );
-extern void ( triggerWheel_irq_handler )( void );
+extern void ( coilPackCharge_irq_entry )( void );
+extern void ( coilPackFire_irq_entry ) ( void );
+extern void ( triggerWheel_irq_entry )( void );
 
 //*----------------------------------------------------------------------------
 //* Function Name       : timer_init
@@ -130,7 +129,7 @@ static void triggerWheelTimerInit( void )
 	,AT91C_ID_TC0
 	);
 
-	AT91F_AIC_ConfigureIt ( AT91C_BASE_AIC, AT91C_ID_TC0, TRIGGER_WHEEL_INTERRUPT_LEVEL,AT91C_AIC_SRCTYPE_EXT_NEGATIVE_EDGE, triggerWheel_irq_handler);
+	AT91F_AIC_ConfigureIt ( AT91C_BASE_AIC, AT91C_ID_TC0, TRIGGER_WHEEL_INTERRUPT_LEVEL,AT91C_AIC_SRCTYPE_EXT_NEGATIVE_EDGE, triggerWheel_irq_entry);
 
 	AT91C_BASE_TC0->TC_IER = AT91C_TC_COVFS | AT91C_TC_LDRBS;  //  IRQ enable RB loading
 	
@@ -159,7 +158,7 @@ static void coilPackChargeTimerInit( void ){
 			AT91C_ID_TC2, 
 			COIL_PACK_INTERRUPT_LEVEL,
 			AT91C_AIC_SRCTYPE_INT_POSITIVE_EDGE, 
-			coilPackCharge_irq_handler
+			coilPackCharge_irq_entry
 			);
 	
 	AT91C_BASE_TC2->TC_IER = AT91C_TC_CPCS;  	// IRQ enable RC compare
@@ -188,7 +187,7 @@ static void coilPackFireTimerInit( void ){
 			AT91C_ID_TC1,
 			COIL_PACK_INTERRUPT_LEVEL,
 			AT91C_AIC_SRCTYPE_INT_POSITIVE_EDGE,
-			coilPackFire_irq_handler
+			coilPackFire_irq_entry
 			);
 
 	AT91C_BASE_TC1->TC_IER = AT91C_TC_CPCS;  	// IRQ enable RC compare
@@ -344,8 +343,6 @@ static void initRuntimeData( void ){
 
 	memset(g_output_state,0,sizeof(g_output_state));
 	memset(g_logical_coil_drivers, 0, sizeof(g_logical_coil_drivers));
-
-	vSemaphoreCreateBinary( xOnRevolutionHandle );
 
 	//default to the first ignition configuration
 	//TODO: read the input state and actually select the right one
@@ -609,7 +606,7 @@ void calculateAdvance(){
 	g_currentRPMBin = rpmBin;
 }
 
-void onRevoluationCalculation(){
+void onRevolutionCalculation(){
 	ToggleLED(LED_2);
 
 	unsigned int crankPeriodUSec = calculateCrankPeriodUSec();
@@ -623,8 +620,7 @@ void onRevoluationCalculation(){
 //				updateUserOutputs();
 }
 
-
-void onRevolutionTask(void *pvParameters){
+void initIgnition(){
 
 	AT91F_PIO_CfgOutput( AT91C_BASE_PIOA, COIL_DRIVER_ALL_PORTS );
 	AT91F_PIO_SetOutput( AT91C_BASE_PIOA, COIL_DRIVER_ALL_PORTS ) ;
@@ -632,114 +628,27 @@ void onRevolutionTask(void *pvParameters){
 
 	initRuntimeData();
 
-	portENTER_CRITICAL();
 	triggerWheelTimerInit();
 	coilPackChargeTimerInit();
 	coilPackFireTimerInit();
 
 	enableIRQ();
-	portEXIT_CRITICAL();
 
 	AT91F_PIO_CfgOutput( AT91C_BASE_PIOA, COILS_ENABLE );
 	AT91F_PIO_ClearOutput( AT91C_BASE_PIOA, COILS_ENABLE );
 
 	DisableLED(LED_1);
 	DisableLED(LED_2);
-
-	while(1){
-		if ( xSemaphoreTake(xOnRevolutionHandle, 1) == pdTRUE){
-
-			unsigned int currentTooth = g_currentTooth;
-			unsigned int currentInterToothPeriodRaw = g_currentInterToothPeriodRaw;
-			unsigned int lastInterToothPeriodRaw = g_lastInterToothPeriodRaw;
-			unsigned int wheelSynchronized = g_wheelSynchronized;
-			unsigned int currentCrankRevolutionPeriodRaw = g_currentCrankRevolutionPeriodRaw;
-
-			//if the inter-tooth period is more than 1.5 times the last tooth, we
-			//detected the missing tooth
-			if (currentInterToothPeriodRaw > lastInterToothPeriodRaw + (lastInterToothPeriodRaw / 2)){
-
-				//found maybe a missing tooth
-				//the missing tooth is 2x longer than normal - adjust the period
-				currentInterToothPeriodRaw = currentInterToothPeriodRaw / 2;
-
-				//missing tooth is tooth 'zero'
-				//we detect the missing tooth by detecting the tooth following
-				g_toothCountAtLastSyncAttempt = currentTooth;
-
-				if (currentTooth != CRANK_TEETH - 1){
-					//we either:
-					//1. had a partial tooth count - first time cranking or power-up
-					//2. we had noise - extra pulses
-					//3. we missed a tooth
-					wheelSynchronized = 0;
-					//start over again
-					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
-					g_wheelSyncAttempts++;
-					currentTooth = 0;
-				}
-				else{
-					//looks good, we counted the correct number of teeth
-					//before the missing tooth: we're synchronized to the
-					//crank trigger
-					wheelSynchronized = 1;
-					//save the last period
-					g_lastCrankRevolutionPeriodRaw = currentCrankRevolutionPeriodRaw + currentInterToothPeriodRaw;
-					//start tooth #1 with the current period
-					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
-					//we're at a missing tooth- signal RPM/advance calculation task
-					g_engineIsRunning = 1;
-					EnableLED(LED_1);
-				}
-				currentTooth = 1;
-
-			}
-			else{
-				currentTooth++;
-				if (currentTooth > CRANK_TEETH - 1 ){
-					//we counted too many teeth
-					wheelSynchronized = 0;
-					//start over again
-					currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
-					g_wheelSyncAttempts++;
-					currentTooth = 0;
-					DisableLED(LED_1);
-				}
-				else{
-					//we simply detected the next tooth
-					currentCrankRevolutionPeriodRaw += currentInterToothPeriodRaw;
-				}
-			}
-
-			if (wheelSynchronized){
-
-				unsigned int firePort = g_coilFirePort[currentTooth];
-				if (0 !=  firePort){
-					//schedule the coil for firing
-					g_coilDriversToFire = firePort;
-					AT91C_BASE_TC1->TC_RC = g_coilFireTimerCount[currentTooth];
-					AT91C_BASE_TC1->TC_CCR = AT91C_TC_SWTRG;
-				}
-
-				unsigned int chargePort = g_coilChargePort[currentTooth];
-				if (0 != chargePort){
-					//schedule the coil for charging
-					g_coilDriversToCharge = chargePort;
-					AT91C_BASE_TC2->TC_RC = g_coilChargeTimerCount[currentTooth];
-					AT91C_BASE_TC2->TC_CCR = AT91C_TC_SWTRG;
-				}
-			}
-
-			g_currentToothPeriodOverflowCount = 0;
-			g_wheelSynchronized = wheelSynchronized;
-			g_currentTooth = currentTooth;
-			g_lastInterToothPeriodRaw = currentInterToothPeriodRaw;
-			g_currentCrankRevolutionPeriodRaw = currentCrankRevolutionPeriodRaw;
-
-			if (currentTooth == g_recalculateTooth) onRevoluationCalculation();
-		}
-	}
 }
+
+void processIgnition(){
+	if (g_recalculatePending) onRevolutionCalculation();
+	g_recalculatePending = 0;
+}
+
+
+
+
 
 ///Ignition Related API Commands
 
@@ -1065,27 +974,3 @@ void getDebug(unsigned int argc, char **argv){
 	SendUint(g_coilDriversToCharge);
 	SendCrlf();
 }
-
-void terminateOS(unsigned int argc, char **argv){
-	portENTER_CRITICAL();
-}
-
-void suspendOS(unsigned int argc, char **argv){
-	vTaskSuspendAll();
-}
-
-void resumeOS(unsigned int argc, char **argv){
-	xTaskResumeAll();
-}
-
-void startTwInterrupt(unsigned int argc, char **argv){
-
-	SendString("Before TriggerWheel Timer Init");
-	triggerWheelTimerInit();
-	SendString("after TriggerWheel Timer Init");
-	SendCrlf();
-}
-
-
-
-

@@ -10,10 +10,9 @@
 
 #include "constants.h"
 
-#define BASE_COMMANDS \
-		{"showTasks", "Show status of running tasks", "", ShowTaskInfo}
+#define BASE_COMMANDS {"getFreeMem", "Gets Available Memory","getFreeMem", getFreeMem}
 
+void getFreeMem(unsigned int argc, char **argv);
 
-void ShowTaskInfo(unsigned int argc, char **argv);
 
 #endif /* BASECOMMANDS_H_ */

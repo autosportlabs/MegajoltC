@@ -4,19 +4,14 @@
  *  Created on: Jul 26, 2011
  *      Author: brent
  */
-#include "FreeRTOS.h"
-#include "task.h"
 #include "board.h"
 #include "io.h"
 
-void StartIOTasks(void){
-	InitIO();
-}
-void InitIO(void){
-	InitLEDs();
+void initIO(void){
+	initLEDs();
 }
 
-void InitLEDs(void){
+void initLEDs(void){
     AT91F_PIO_CfgOutput( AT91C_BASE_PIOA, LED_MASK ) ;
    //* Clear the LED's.
     AT91F_PIO_SetOutput( AT91C_BASE_PIOA, LED_MASK ) ;

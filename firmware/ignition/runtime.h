@@ -1,16 +1,14 @@
 #ifndef RUNTIME_H_
 #define RUNTIME_H_
 
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
 #include "ignition_config.h"
 
 //the number of timer ticks representing the
 //trigger wheel ISR latency
 //126
 //210
-#define ISR_OVEREAD_TIMER_TICK_COUNTS		1050
+//1050
+#define ISR_OVEREAD_TIMER_TICK_COUNTS		0
 
 #define USER_OUTPUT_RPM_HYSTERESIS  		100
 #define USER_OUTPUT_LOAD_HYSTERESIS 		2
@@ -50,9 +48,8 @@ struct logical_coil_driver{
 };
 
 
-//On revolution
-void onRevolutionTask(void *);
-
+void initIgnition();
+void processIgnition();
 
 void enableLockedAdvance(unsigned int argc, char **argv);
 void disableLockedAdvance(unsigned int argc, char **argv);
@@ -67,10 +64,6 @@ void getLoadBins(unsigned int argc, char **argv);
 void getIgnMap(unsigned int argc, char **argv);
 void getUserOutCfg(unsigned int argc, char **argv);
 void setUserOutCfg(unsigned int argc, char **argv);
-void terminateOS(unsigned int argc, char **argv);
-void suspendOS(unsigned int argc, char **argv);
-void resumeOS(unsigned int argc, char **argv);
-void startTwInterrupt(unsigned int argc, char **argv);
 
 #define IGNITION_COMMANDS \
 		{"getRuntime", "Outputs a delimited list of runtime values.","getRuntime", getRuntime}, \
@@ -85,10 +78,6 @@ void startTwInterrupt(unsigned int argc, char **argv);
 		{"getUserOutCfg", "Gets the currently active user output configuration.","getUserOutcfg <output>", getUserOutCfg}, \
 		{"setUserOutCfg", "Sets the currently active user output configuration.","setUserOutcfg <output> <type> <mode> <trigger>", getUserOutCfg}, \
 		{"enLockedAdv", "Enables locking of ignition advance","<advance>", enableLockedAdvance}, \
-		{"disLockedAdv", "Disabled locking ignition advance","",disableLockedAdvance}, \
-		{"terminateOS", "","",terminateOS}, \
-		{"suspendOS","","",suspendOS}, \
-		{"resumeOS","","",resumeOS}, \
-		{"startInt","","",startTwInterrupt}
+		{"disLockedAdv", "Disabled locking ignition advance","",disableLockedAdvance}
 
 #endif /*RUNTIME_H_*/

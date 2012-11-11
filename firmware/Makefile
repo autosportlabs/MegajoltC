@@ -60,24 +60,21 @@ TARGET = main
 
 
 # Common directories
-SAM7s_BASE_DIR = SAM7s_base
-HW_DIR = $(SAM7s_BASE_DIR)/hardware
-RTOS_DIR = $(SAM7s_BASE_DIR)/FreeRTOS
-RTOS_SRC_DIR = $(RTOS_DIR)/Source
-RTOS_PORT_DIR = $(RTOS_SRC_DIR)/portable
-RTOS_GCC_DIR = $(RTOS_PORT_DIR)/GCC/ARM7_AT91SAM7S
-RTOS_MEMMANG_DIR = $(RTOS_PORT_DIR)/MemMang
-USB_SRC_DIR = $(SAM7s_BASE_DIR)/usb
-SERIAL_SRC_DIR = $(SAM7s_BASE_DIR)/serial
-UTIL_DIR = $(SAM7s_BASE_DIR)/util
-MEMORY_SRC_DIR = $(SAM7s_BASE_DIR)/memory
+SAM7S_BASE = SAM7s_base
+INTERRUPTS_DIR = $(SAM7S_BASE)/interrupts
+HW_DIR = $(SAM7S_BASE)/hardware
+MEMMANG_DIR = $(SAM7S_BASE)/MemMang
+SERIAL_SRC_DIR = $(SAM7S_BASE)/serial
+UTIL_DIR = $(SAM7S_BASE)/util
+MEMORY_SRC_DIR = $(SAM7S_BASE)/memory
+CMD_SRC_DIR = $(SAM7S_BASE)/command
+INTERRUPTS_DIR = $(SAM7S_BASE)/interrupts
+USB_DIR = $(SAM7S_BASE)/usb
+
 IGNITION_SRC_DIR = ignition
-CMD_SRC_DIR = $(SAM7s_BASE_DIR)/command
-
+SYSTEM_DIR = system
 IO_SRC_DIR = io
-
-# App specific dirs
-CPU_MODULE_DIR = cpu_module
+COMMS_DIR = comms
 
 # List C source files here. (C dependencies are automatically generated.)
 # use file-extension c for "c-only"-files
@@ -85,29 +82,25 @@ SRC	= \
 $(TARGET).c \
 baseCommands.c \
 $(HW_DIR)/lib_AT91SAM7S256.c \
-$(RTOS_SRC_DIR)/tasks.c \
-$(RTOS_SRC_DIR)/queue.c \
-$(RTOS_SRC_DIR)/list.c \
-$(RTOS_GCC_DIR)/port.c \
-$(USB_SRC_DIR)/source/usb_comm.c \
-$(USB_SRC_DIR)/source/USB-CDC.c \
 $(SERIAL_SRC_DIR)/usart.c \
 $(UTIL_DIR)/modp_numtoa.c \
 $(UTIL_DIR)/modp_atonum.c \
 $(UTIL_DIR)/mod_string.c \
 $(MEMORY_SRC_DIR)/memory.c \
-$(RTOS_PORT_DIR)/MemMang/heap_2_combine.c \
+$(MEMMANG_DIR)/heap_2_combine.c \
 $(IO_SRC_DIR)/io.c \
 $(IGNITION_SRC_DIR)/runtime.c \
-$(IGNITION_SRC_DIR)/ignitionTask.c 
+$(SYSTEM_DIR)/system.c \
+$(USB_DIR)/usb.c \
+$(COMMS_DIR)/comm.c \
+$(USB_DIR)/cdc_enumerate.c
 
 
 # List C source files here which must be compiled in ARM-Mode.
 # use file-extension c for "c-only"-files
-SRCARM = $(RTOS_GCC_DIR)/portISR.c \
+SRCARM = \
 $(IGNITION_SRC_DIR)/triggerWheelIsr.c \
-interrupt_utils.c \
-$(USB_SRC_DIR)/source/USBIsr.c  
+$(INTERRUPTS_DIR)/interrupt_utils.c
 
 # List C++ source files here.
 # use file-extension cpp for C++-files (use extension .cpp)
@@ -128,7 +121,7 @@ CPPSRCARM =
 ASRC = 
 
 # List Assembler source files here which must be assembled in ARM-Mode..
-ASRCARM = startup_SAM7S.S
+ASRCARM = startup_SAM7S.S ignition/ignition_irq.S
 #ASRCARM = crt.S
 
 # Optimization level, can be [0, 1, 2, 3, s]. 
@@ -169,7 +162,7 @@ CDEFS += -DSAM7_GCC
 CDEFS += -DTHUMB_INTERWORK
 
 # Place -I options here
-CINCS = -I. -I$(RTOS_MEMMANG_DIR) -I$(UTIL_DIR) -I$(MEMORY_SRC_DIR) -I$(SERIAL_SRC_DIR) -I$(USB_SRC_DIR)/include -I$(HW_DIR)/include -I$(RTOS_SRC_DIR)/include -I$(RTOS_GCC_DIR) -I$(IGNITION_SRC_DIR) -I$(IO_SRC_DIR) -I$(CMD_SRC_DIR)
+CINCS = -I. -I$(SYSTEM_DIR) -I$(INTERRUPTS_DIR) -I $(COMMS_DIR) -I$(USB_DIR) -I$(MEMMANG_DIR) -I$(UTIL_DIR) -I$(MEMORY_SRC_DIR) -I$(SERIAL_SRC_DIR) -I$(HW_DIR)/include -I$(IGNITION_SRC_DIR) -I$(IO_SRC_DIR) -I$(CMD_SRC_DIR)
 # Place -D or -U options for ASM here
 ADEFS =  -D$(RUN_MODE)
 
