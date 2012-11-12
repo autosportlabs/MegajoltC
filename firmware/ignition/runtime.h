@@ -49,7 +49,7 @@ struct logical_coil_driver{
 
 
 void initIgnition();
-void processIgnition();
+void processRuntime();
 
 void enableLockedAdvance(unsigned int argc, char **argv);
 void disableLockedAdvance(unsigned int argc, char **argv);

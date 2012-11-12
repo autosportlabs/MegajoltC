@@ -7,15 +7,15 @@
 
 int main( void )
 {
-	setupHardware();
-	initComms();
+	initSystemHardware();
 	initIO();
+	initComms();
 	initIgnition();
 
 
 	while(1){
 		processCommand();
-		processIgnition();
+		processRuntime();
 	}
    return 0;
 }

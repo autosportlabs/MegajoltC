@@ -9,6 +9,6 @@
 #define HARDWARE_H_
 
 
-void setupHardware( void );
+void initSystemHardware( void );
 
 #endif /* HARDWARE_H_ */

@@ -123,7 +123,7 @@ void triggerWheel_irq_handler(void)
 				currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
 				//we're at a missing tooth- signal RPM/advance calculation task
 				g_engineIsRunning = 1;
-				EnableLED(LED_1);
+				enableLED(LED_1);
 			}
 			currentTooth = 1;
 
@@ -137,7 +137,7 @@ void triggerWheel_irq_handler(void)
 				currentCrankRevolutionPeriodRaw = currentInterToothPeriodRaw;
 				g_wheelSyncAttempts++;
 				currentTooth = 0;
-				DisableLED(LED_1);
+				disableLED(LED_1);
 			}
 			else{
 				//we simply detected the next tooth

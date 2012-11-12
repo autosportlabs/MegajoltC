@@ -117,7 +117,7 @@ static void CmdParse(char *cmdStr){
 		cmd++;
 	}
 	if (NULL == cmd->cmd){
-		   ToggleLED(LED_2);
+		   toggleLED(LED_2);
 		   for (int x=0;x < 1000000; x++){}
 
 

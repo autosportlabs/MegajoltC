@@ -6,6 +6,8 @@
  */
 #include "system.h"
 #include "board.h"
+
+#define WATCHDOG_TIMEOUT		3000
 /*-----------------*/
 /* Clock Selection */
 /*-----------------*/
@@ -33,7 +35,15 @@
 #define   STARTUP  (0xc)    // This time period must be higher than 20 �s
 #define   SHTIM    (0x3)    // Must be higher than 3 ADC clock cycles but depends on output
                             // impedance of the analog driver to the ADC input
-void setupHardware( void )
+
+
+static void initWatchdog(int timeoutMs){
+	 int counter= AT91F_WDTGetPeriod(timeoutMs);
+	 AT91F_WDTSetMode(AT91C_BASE_WDTC, AT91C_WDTC_WDRSTEN | AT91C_WDTC_WDRPROC | counter | (counter << 16));
+	 AT91F_WDTC_CfgPMC();
+}
+
+void initSystemHardware( void )
 {
 	/* When using the JTAG debugger the hardware is not always initialised to
 	the correct default state.  This line just ensures that this does not
@@ -51,10 +61,5 @@ void setupHardware( void )
    /* Enable reset-button */
    AT91F_RSTSetMode( AT91C_BASE_RSTC , AT91C_RSTC_URSTEN );
 
-   /* Init ADC */
-   AT91F_ADC_SoftReset (AT91C_BASE_ADC);
-
-   AT91F_ADC_CfgModeReg (AT91C_BASE_ADC,
-		(SHTIM << 24) | (STARTUP << 16) | (PRESCAL << 8) |
-		(SLEEP << 5) | (LOWRES <<4) | (TRGSEL << 1) | (TRGEN )) ;
+   initWatchdog(WATCHDOG_TIMEOUT);
 }
