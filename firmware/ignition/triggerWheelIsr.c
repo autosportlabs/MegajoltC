@@ -29,7 +29,7 @@ extern unsigned int					g_recalculatePending;
 
 void coilPackCharge_irq_handler(void){
 	
-	AT91C_BASE_PIOA->PIO_CODR = g_coilDriversToCharge;
+	AT91C_BASE_PIOA->PIO_CODR = g_coilDriversToCharge | TACH_OUT;
 	g_coilDriversToCharge = 0;		
 	
 	AT91C_BASE_AIC->AIC_EOICR = AT91C_BASE_TC2->TC_SR;      //  Interrupt Ack
@@ -40,7 +40,7 @@ void coilPackCharge_irq_handler(void){
 
 void coilPackFire_irq_handler(void){
 
-	AT91C_BASE_PIOA->PIO_SODR = g_coilDriversToFire;
+	AT91C_BASE_PIOA->PIO_SODR = g_coilDriversToFire | TACH_OUT;
 	g_coilDriversToFire = 0;
 
 	AT91C_BASE_AIC->AIC_EOICR = AT91C_BASE_TC1->TC_SR;      //  Interrupt Ack
