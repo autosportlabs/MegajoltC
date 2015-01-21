@@ -1,0 +1,990 @@
+   1              		.code	16
+   2              		.file	"usb_comm.c"
+   3              		.global	welcomeMsg
+   4              		.section	.rodata.welcomeMsg,"a",%progbits
+   5              		.align	2
+   8              	welcomeMsg:
+   9 0000 57656C63 		.ascii	"Welcome to Megaolt/C : Firmware Version 0.0.1\000"
+   9      6F6D6520 
+   9      746F204D 
+   9      6567616F 
+   9      6C742F43 
+  10              		.global	cmdPrompt
+  11 002e 0000     		.section	.rodata.cmdPrompt,"a",%progbits
+  12              		.align	2
+  15              	cmdPrompt:
+  16 0000 4D656761 		.ascii	"Megajolt/C\000"
+  16      6A6F6C74 
+  16      2F4300
+  17              		.global	commands
+  18 000b 00       		.section	.rodata.str1.4,"aMS",%progbits,1
+  19 0001 000000   		.align	2
+  20              	.LC0:
+  21 0004 67657446 		.ascii	"getFreeMem\000"
+  21      7265654D 
+  21      656D00
+  22 000f 00       		.align	2
+  23              	.LC1:
+  24 0010 47657473 		.ascii	"Gets Available Memory\000"
+  24      20417661 
+  24      696C6162 
+  24      6C65204D 
+  24      656D6F72 
+  25 0026 0000     		.align	2
+  26              	.LC2:
+  27 0028 67657452 		.ascii	"getRuntime\000"
+  27      756E7469 
+  27      6D6500
+  28 0033 00       		.align	2
+  29              	.LC3:
+  30 0034 4F757470 		.ascii	"Outputs a delimited list of runtime values.\000"
+  30      75747320 
+  30      61206465 
+  30      6C696D69 
+  30      74656420 
+  31              		.align	2
+  32              	.LC4:
+  33 0060 67657444 		.ascii	"getDebug\000"
+  33      65627567 
+  33      00
+  34 0069 000000   		.align	2
+  35              	.LC5:
+  36 006c 4F757470 		.ascii	"Output debug values.\000"
+  36      75742064 
+  36      65627567 
+  36      2076616C 
+  36      7565732E 
+  37 0081 000000   		.align	2
+  38              	.LC6:
+  39 0084 73657449 		.ascii	"setIgnCell\000"
+  39      676E4365 
+  39      6C6C00
+  40 008f 00       		.align	2
+  41              	.LC7:
+  42 0090 53657473 		.ascii	"Sets an ignition map cell.\000"
+  42      20616E20 
+  42      69676E69 
+  42      74696F6E 
+  42      206D6170 
+  43 00ab 00       		.align	2
+  44              	.LC8:
+  45 00ac 73657449 		.ascii	"setIgnCell <rpmBin> <loadBin> <advance>\000"
+  45      676E4365 
+  45      6C6C203C 
+  45      72706D42 
+  45      696E3E20 
+  46              		.align	2
+  47              	.LC9:
+  48 00d4 73657449 		.ascii	"setIgnRpmBin\000"
+  48      676E5270 
+  48      6D42696E 
+  48      00
+  49 00e1 000000   		.align	2
+  50              	.LC10:
+  51 00e4 53657473 		.ascii	"Sets an ignition map RPM bin.\000"
+  51      20616E20 
+  51      69676E69 
+  51      74696F6E 
+  51      206D6170 
+  52 0102 0000     		.align	2
+  53              	.LC11:
+  54 0104 73657449 		.ascii	"setIgnRpmBin <rpmBin> <value>\000"
+  54      676E5270 
+  54      6D42696E 
+  54      203C7270 
+  54      6D42696E 
+  55 0122 0000     		.align	2
+  56              	.LC12:
+  57 0124 73657449 		.ascii	"setIgnLoadBin\000"
+  57      676E4C6F 
+  57      61644269 
+  57      6E00
+  58 0132 0000     		.align	2
+  59              	.LC13:
+  60 0134 53657473 		.ascii	"Sets an ignition map load bin.,\000"
+  60      20616E20 
+  60      69676E69 
+  60      74696F6E 
+  60      206D6170 
+  61              		.align	2
+  62              	.LC14:
+  63 0154 73657449 		.ascii	"setIgnLoadBin <rpmBin> <value>\000"
+  63      676E4C6F 
+  63      61644269 
+  63      6E203C72 
+  63      706D4269 
+  64 0173 00       		.align	2
+  65              	.LC15:
+  66 0174 67657445 		.ascii	"getEngineCfg\000"
+  66      6E67696E 
+  66      65436667 
+  66      00
+  67 0181 000000   		.align	2
+  68              	.LC16:
+  69 0184 47657473 		.ascii	"Gets the current engine configuration.\000"
+  69      20746865 
+  69      20637572 
+  69      72656E74 
+  69      20656E67 
+  70 01ab 00       		.align	2
+  71              	.LC17:
+  72 01ac 67657449 		.ascii	"getIgnRpmBins\000"
+  72      676E5270 
+  72      6D42696E 
+  72      7300
+  73 01ba 0000     		.align	2
+  74              	.LC18:
+  75 01bc 47657473 		.ascii	"Gets the currently active ignition RPM bins.\000"
+  75      20746865 
+  75      20637572 
+  75      72656E74 
+  75      6C792061 
+  76 01e9 000000   		.align	2
+  77              	.LC19:
+  78 01ec 67657449 		.ascii	"getIgnLoadBins\000"
+  78      676E4C6F 
+  78      61644269 
+  78      6E7300
+  79 01fb 00       		.align	2
+  80              	.LC20:
+  81 01fc 47657473 		.ascii	"Gets the currently active load bins.\000"
+  81      20746865 
+  81      20637572 
+  81      72656E74 
+  81      6C792061 
+  82 0221 000000   		.align	2
+  83              	.LC21:
+  84 0224 67657449 		.ascii	"getIgnMap\000"
+  84      676E4D61 
+  84      7000
+  85 022e 0000     		.align	2
+  86              	.LC22:
+  87 0230 47657473 		.ascii	"Gets the currently active ignition map, in RPM x Lo"
+  87      20746865 
+  87      20637572 
+  87      72656E74 
+  87      6C792061 
+  88 0263 61642066 		.ascii	"ad format.\000"
+  88      6F726D61 
+  88      742E00
+  89 026e 0000     		.align	2
+  90              	.LC23:
+  91 0270 67657455 		.ascii	"getUserOutCfg\000"
+  91      7365724F 
+  91      75744366 
+  91      6700
+  92 027e 0000     		.align	2
+  93              	.LC24:
+  94 0280 47657473 		.ascii	"Gets the currently active user output configuration"
+  94      20746865 
+  94      20637572 
+  94      72656E74 
+  94      6C792061 
+  95 02b3 2E00     		.ascii	".\000"
+  96 02b5 000000   		.align	2
+  97              	.LC25:
+  98 02b8 67657455 		.ascii	"getUserOutcfg <output>\000"
+  98      7365724F 
+  98      75746366 
+  98      67203C6F 
+  98      75747075 
+  99 02cf 00       		.align	2
+ 100              	.LC26:
+ 101 02d0 73657455 		.ascii	"setUserOutCfg\000"
+ 101      7365724F 
+ 101      75744366 
+ 101      6700
+ 102 02de 0000     		.align	2
+ 103              	.LC27:
+ 104 02e0 53657473 		.ascii	"Sets the currently active user output configuration"
+ 104      20746865 
+ 104      20637572 
+ 104      72656E74 
+ 104      6C792061 
+ 105 0313 2E00     		.ascii	".\000"
+ 106 0315 000000   		.align	2
+ 107              	.LC28:
+ 108 0318 73657455 		.ascii	"setUserOutcfg <output> <type> <mode> <trigger>\000"
+ 108      7365724F 
+ 108      75746366 
+ 108      67203C6F 
+ 108      75747075 
+ 109 0347 00       		.align	2
+ 110              	.LC29:
+ 111 0348 656E4C6F 		.ascii	"enLockedAdv\000"
+ 111      636B6564 
+ 111      41647600 
+ 112              		.align	2
+ 113              	.LC30:
+ 114 0354 456E6162 		.ascii	"Enables locking of ignition advance\000"
+ 114      6C657320 
+ 114      6C6F636B 
+ 114      696E6720 
+ 114      6F662069 
+ 115              		.align	2
+ 116              	.LC31:
+ 117 0378 3C616476 		.ascii	"<advance>\000"
+ 117      616E6365 
+ 117      3E00
+ 118 0382 0000     		.align	2
+ 119              	.LC32:
+ 120 0384 6469734C 		.ascii	"disLockedAdv\000"
+ 120      6F636B65 
+ 120      64416476 
+ 120      00
+ 121 0391 000000   		.align	2
+ 122              	.LC33:
+ 123 0394 44697361 		.ascii	"Disabled locking ignition advance\000"
+ 123      626C6564 
+ 123      206C6F63 
+ 123      6B696E67 
+ 123      2069676E 
+ 124              		.subsection	-1
+ 125              		.align	2
+ 126              	.LC34:
+ 127 0000 00       		.ascii	"\000"
+ 128              		.section	.rodata.commands,"a",%progbits
+ 129              		.align	2
+ 132              	commands:
+ 133 0000 04000000 		.word	.LC0
+ 134 0004 10000000 		.word	.LC1
+ 135 0008 04000000 		.word	.LC0
+ 136 000c 00000000 		.word	getFreeMem
+ 137 0010 28000000 		.word	.LC2
+ 138 0014 34000000 		.word	.LC3
+ 139 0018 28000000 		.word	.LC2
+ 140 001c 00000000 		.word	getRuntime
+ 141 0020 60000000 		.word	.LC4
+ 142 0024 6C000000 		.word	.LC5
+ 143 0028 60000000 		.word	.LC4
+ 144 002c 00000000 		.word	getDebug
+ 145 0030 84000000 		.word	.LC6
+ 146 0034 90000000 		.word	.LC7
+ 147 0038 AC000000 		.word	.LC8
+ 148 003c 00000000 		.word	setIgnitionCell
+ 149 0040 D4000000 		.word	.LC9
+ 150 0044 E4000000 		.word	.LC10
+ 151 0048 04010000 		.word	.LC11
+ 152 004c 00000000 		.word	setIgnitionRPMBin
+ 153 0050 24010000 		.word	.LC12
+ 154 0054 34010000 		.word	.LC13
+ 155 0058 54010000 		.word	.LC14
+ 156 005c 00000000 		.word	setIgnitionLoadBin
+ 157 0060 74010000 		.word	.LC15
+ 158 0064 84010000 		.word	.LC16
+ 159 0068 74010000 		.word	.LC15
+ 160 006c 00000000 		.word	getEngineConfig
+ 161 0070 AC010000 		.word	.LC17
+ 162 0074 BC010000 		.word	.LC18
+ 163 0078 AC010000 		.word	.LC17
+ 164 007c 00000000 		.word	getRpmBins
+ 165 0080 EC010000 		.word	.LC19
+ 166 0084 FC010000 		.word	.LC20
+ 167 0088 EC010000 		.word	.LC19
+ 168 008c 00000000 		.word	getLoadBins
+ 169 0090 24020000 		.word	.LC21
+ 170 0094 30020000 		.word	.LC22
+ 171 0098 24020000 		.word	.LC21
+ 172 009c 00000000 		.word	getIgnMap
+ 173 00a0 70020000 		.word	.LC23
+ 174 00a4 80020000 		.word	.LC24
+ 175 00a8 B8020000 		.word	.LC25
+ 176 00ac 00000000 		.word	getUserOutCfg
+ 177 00b0 D0020000 		.word	.LC26
+ 178 00b4 E0020000 		.word	.LC27
+ 179 00b8 18030000 		.word	.LC28
+ 180 00bc 00000000 		.word	getUserOutCfg
+ 181 00c0 48030000 		.word	.LC29
+ 182 00c4 54030000 		.word	.LC30
+ 183 00c8 78030000 		.word	.LC31
+ 184 00cc 00000000 		.word	enableLockedAdvance
+ 185 00d0 84030000 		.word	.LC32
+ 186 00d4 94030000 		.word	.LC33
+ 187 00d8 00000000 		.word	.LC34
+ 188 00dc 00000000 		.word	disableLockedAdvance
+ 189 00e0 00000000 		.word	0
+ 190 00e4 00000000 		.word	0
+ 191 00e8 00000000 		.word	0
+ 192 00ec 00000000 		.word	0
+ 193              		.section	.bss.menuPadding,"aw",%nobits
+ 194              		.align	2
+ 197              	menuPadding:
+ 198 0000 00000000 		.space	4
+ 199              		.section	.text.SendChar,"ax",%progbits
+ 200              		.align	2
+ 201              		.global	SendChar
+ 202              		.code 16
+ 203              		.thumb_func
+ 205              	SendChar:
+ 206              		@ lr needed for prologue
+ 207              		@ sp needed for prologue
+ 208 0000 7047     		bx	lr
+ 210 0002 C046     		.section	.text.SendBytes,"ax",%progbits
+ 211              		.align	2
+ 212              		.global	SendBytes
+ 213              		.code 16
+ 214              		.thumb_func
+ 216              	SendBytes:
+ 217 0000 0023     		mov	r3, #0
+ 218              		@ lr needed for prologue
+ 219 0002 00E0     		b	.L4
+ 220              	.L5:
+ 221 0004 0133     		add	r3, r3, #1
+ 222              	.L4:
+ 223 0006 8B42     		cmp	r3, r1
+ 224 0008 FCD1     		bne	.L5
+ 225              		@ sp needed for prologue
+ 226 000a 7047     		bx	lr
+ 228              		.section	.text.SendString,"ax",%progbits
+ 229              		.align	2
+ 230              		.global	SendString
+ 231              		.code 16
+ 232              		.thumb_func
+ 234              	SendString:
+ 235 0000 0378     		ldrb	r3, [r0]
+ 236              		@ lr needed for prologue
+ 237              	.L10:
+ 238 0002 002B     		cmp	r3, #0
+ 239 0004 FDD1     		bne	.L10
+ 240              		@ sp needed for prologue
+ 241 0006 7047     		bx	lr
+ 243              		.section	.text.SendCommandOK,"ax",%progbits
+ 244              		.align	2
+ 245              		.global	SendCommandOK
+ 246              		.code 16
+ 247              		.thumb_func
+ 249              	SendCommandOK:
+ 250              		@ lr needed for prologue
+ 251              	.L16:
+ 252 0000 FEE7     		b	.L16
+ 254 0002 C046     		.section	.text.SendCommandParamError,"ax",%progbits
+ 255              		.align	2
+ 256              		.global	SendCommandParamError
+ 257              		.code 16
+ 258              		.thumb_func
+ 260              	SendCommandParamError:
+ 261              		@ lr needed for prologue
+ 262              	.L19:
+ 263 0000 FEE7     		b	.L19
+ 265 0002 C046     		.section	.text.SendInt,"ax",%progbits
+ 266              		.align	2
+ 267              		.global	SendInt
+ 268              		.code 16
+ 269              		.thumb_func
+ 271              	SendInt:
+ 272 0000 10B5     		push	{r4, lr}
+ 273 0002 83B0     		sub	sp, sp, #12
+ 274 0004 6C46     		mov	r4, sp
+ 275 0006 6946     		mov	r1, sp
+ 276 0008 FFF7FEFF 		bl	modp_itoa10
+ 277 000c 2378     		ldrb	r3, [r4]
+ 278              	.L22:
+ 279 000e 002B     		cmp	r3, #0
+ 280 0010 FDD1     		bne	.L22
+ 281 0012 03B0     		add	sp, sp, #12
+ 282              		@ sp needed for prologue
+ 283 0014 10BC     		pop	{r4}
+ 284 0016 01BC     		pop	{r0}
+ 285 0018 0047     		bx	r0
+ 287 001a C046     		.section	.text.SendCommandError,"ax",%progbits
+ 288              		.align	2
+ 289              		.global	SendCommandError
+ 290              		.code 16
+ 291              		.thumb_func
+ 293              	SendCommandError:
+ 294              		@ lr needed for prologue
+ 295              	.L28:
+ 296 0000 FEE7     		b	.L28
+ 298 0002 C046     		.section	.text.SendFloat,"ax",%progbits
+ 299              		.align	2
+ 300              		.global	SendFloat
+ 301              		.code 16
+ 302              		.thumb_func
+ 304              	SendFloat:
+ 305 0000 10B5     		push	{r4, lr}
+ 306 0002 85B0     		sub	sp, sp, #20
+ 307 0004 0A1C     		mov	r2, r1
+ 308 0006 6C46     		mov	r4, sp
+ 309 0008 6946     		mov	r1, sp
+ 310 000a FFF7FEFF 		bl	modp_ftoa
+ 311 000e 2378     		ldrb	r3, [r4]
+ 312              	.L31:
+ 313 0010 002B     		cmp	r3, #0
+ 314 0012 FDD1     		bne	.L31
+ 315 0014 05B0     		add	sp, sp, #20
+ 316              		@ sp needed for prologue
+ 317 0016 10BC     		pop	{r4}
+ 318 0018 01BC     		pop	{r0}
+ 319 001a 0047     		bx	r0
+ 321              		.section	.text.SendDouble,"ax",%progbits
+ 322              		.align	2
+ 323              		.global	SendDouble
+ 324              		.code 16
+ 325              		.thumb_func
+ 327              	SendDouble:
+ 328 0000 10B5     		push	{r4, lr}
+ 329 0002 88B0     		sub	sp, sp, #32
+ 330 0004 6C46     		mov	r4, sp
+ 331 0006 0234     		add	r4, r4, #2
+ 332 0008 131C     		mov	r3, r2
+ 333 000a 221C     		mov	r2, r4
+ 334 000c FFF7FEFF 		bl	modp_dtoa
+ 335 0010 2378     		ldrb	r3, [r4]
+ 336              	.L37:
+ 337 0012 002B     		cmp	r3, #0
+ 338 0014 FDD1     		bne	.L37
+ 339 0016 08B0     		add	sp, sp, #32
+ 340              		@ sp needed for prologue
+ 341 0018 10BC     		pop	{r4}
+ 342 001a 01BC     		pop	{r0}
+ 343 001c 0047     		bx	r0
+ 345 001e C046     		.section	.text.SendHex,"ax",%progbits
+ 346              		.align	2
+ 347              		.global	SendHex
+ 348              		.code 16
+ 349              		.thumb_func
+ 351              	SendHex:
+ 352 0000 10B5     		push	{r4, lr}
+ 353 0002 88B0     		sub	sp, sp, #32
+ 354 0004 6C46     		mov	r4, sp
+ 355 0006 0234     		add	r4, r4, #2
+ 356 0008 211C     		mov	r1, r4
+ 357 000a 1022     		mov	r2, #16
+ 358 000c FFF7FEFF 		bl	modp_itoaX
+ 359 0010 2378     		ldrb	r3, [r4]
+ 360              	.L43:
+ 361 0012 002B     		cmp	r3, #0
+ 362 0014 FDD1     		bne	.L43
+ 363 0016 08B0     		add	sp, sp, #32
+ 364              		@ sp needed for prologue
+ 365 0018 10BC     		pop	{r4}
+ 366 001a 01BC     		pop	{r0}
+ 367 001c 0047     		bx	r0
+ 369 001e C046     		.section	.text.SendUint,"ax",%progbits
+ 370              		.align	2
+ 371              		.global	SendUint
+ 372              		.code 16
+ 373              		.thumb_func
+ 375              	SendUint:
+ 376 0000 10B5     		push	{r4, lr}
+ 377 0002 85B0     		sub	sp, sp, #20
+ 378 0004 6C46     		mov	r4, sp
+ 379 0006 6946     		mov	r1, sp
+ 380 0008 FFF7FEFF 		bl	modp_uitoa10
+ 381 000c 2378     		ldrb	r3, [r4]
+ 382              	.L49:
+ 383 000e 002B     		cmp	r3, #0
+ 384 0010 FDD1     		bne	.L49
+ 385 0012 05B0     		add	sp, sp, #20
+ 386              		@ sp needed for prologue
+ 387 0014 10BC     		pop	{r4}
+ 388 0016 01BC     		pop	{r0}
+ 389 0018 0047     		bx	r0
+ 391 001a C046     		.section	.text.SendNameIndexUint,"ax",%progbits
+ 392              		.align	2
+ 393              		.global	SendNameIndexUint
+ 394              		.code 16
+ 395              		.thumb_func
+ 397              	SendNameIndexUint:
+ 398 0000 0378     		ldrb	r3, [r0]
+ 399              		@ lr needed for prologue
+ 400              	.L55:
+ 401 0002 002B     		cmp	r3, #0
+ 402 0004 FDD1     		bne	.L55
+ 403              	.L59:
+ 404 0006 FEE7     		b	.L59
+ 406              		.section	.text.SendNameSuffixUint,"ax",%progbits
+ 407              		.align	2
+ 408              		.global	SendNameSuffixUint
+ 409              		.code 16
+ 410              		.thumb_func
+ 412              	SendNameSuffixUint:
+ 413 0000 0378     		ldrb	r3, [r0]
+ 414              		@ lr needed for prologue
+ 415              	.L61:
+ 416 0002 002B     		cmp	r3, #0
+ 417 0004 FDD1     		bne	.L61
+ 418              	.L65:
+ 419 0006 FEE7     		b	.L65
+ 421              		.section	.text.SendNameUint,"ax",%progbits
+ 422              		.align	2
+ 423              		.global	SendNameUint
+ 424              		.code 16
+ 425              		.thumb_func
+ 427              	SendNameUint:
+ 428 0000 0378     		ldrb	r3, [r0]
+ 429              		@ lr needed for prologue
+ 430              	.L67:
+ 431 0002 002B     		cmp	r3, #0
+ 432 0004 FDD1     		bne	.L67
+ 433              	.L71:
+ 434 0006 FEE7     		b	.L71
+ 436              		.section	.text.SendNameIndexInt,"ax",%progbits
+ 437              		.align	2
+ 438              		.global	SendNameIndexInt
+ 439              		.code 16
+ 440              		.thumb_func
+ 442              	SendNameIndexInt:
+ 443 0000 0378     		ldrb	r3, [r0]
+ 444              		@ lr needed for prologue
+ 445              	.L73:
+ 446 0002 002B     		cmp	r3, #0
+ 447 0004 FDD1     		bne	.L73
+ 448              	.L77:
+ 449 0006 FEE7     		b	.L77
+ 451              		.section	.text.SendNameSuffixInt,"ax",%progbits
+ 452              		.align	2
+ 453              		.global	SendNameSuffixInt
+ 454              		.code 16
+ 455              		.thumb_func
+ 457              	SendNameSuffixInt:
+ 458 0000 0378     		ldrb	r3, [r0]
+ 459              		@ lr needed for prologue
+ 460              	.L79:
+ 461 0002 002B     		cmp	r3, #0
+ 462 0004 FDD1     		bne	.L79
+ 463              	.L83:
+ 464 0006 FEE7     		b	.L83
+ 466              		.section	.text.SendNameInt,"ax",%progbits
+ 467              		.align	2
+ 468              		.global	SendNameInt
+ 469              		.code 16
+ 470              		.thumb_func
+ 472              	SendNameInt:
+ 473 0000 0378     		ldrb	r3, [r0]
+ 474              		@ lr needed for prologue
+ 475              	.L85:
+ 476 0002 002B     		cmp	r3, #0
+ 477 0004 FDD1     		bne	.L85
+ 478              	.L89:
+ 479 0006 FEE7     		b	.L89
+ 481              		.section	.text.SendNameIndexDouble,"ax",%progbits
+ 482              		.align	2
+ 483              		.global	SendNameIndexDouble
+ 484              		.code 16
+ 485              		.thumb_func
+ 487              	SendNameIndexDouble:
+ 488 0000 0378     		ldrb	r3, [r0]
+ 489              		@ lr needed for prologue
+ 490              	.L91:
+ 491 0002 002B     		cmp	r3, #0
+ 492 0004 FDD1     		bne	.L91
+ 493              	.L95:
+ 494 0006 FEE7     		b	.L95
+ 496              		.section	.text.SendNameSuffixDouble,"ax",%progbits
+ 497              		.align	2
+ 498              		.global	SendNameSuffixDouble
+ 499              		.code 16
+ 500              		.thumb_func
+ 502              	SendNameSuffixDouble:
+ 503 0000 0378     		ldrb	r3, [r0]
+ 504              		@ lr needed for prologue
+ 505              	.L97:
+ 506 0002 002B     		cmp	r3, #0
+ 507 0004 FDD1     		bne	.L97
+ 508              	.L101:
+ 509 0006 FEE7     		b	.L101
+ 511              		.section	.text.SendNameDouble,"ax",%progbits
+ 512              		.align	2
+ 513              		.global	SendNameDouble
+ 514              		.code 16
+ 515              		.thumb_func
+ 517              	SendNameDouble:
+ 518 0000 0378     		ldrb	r3, [r0]
+ 519              		@ lr needed for prologue
+ 520              	.L103:
+ 521 0002 002B     		cmp	r3, #0
+ 522 0004 FDD1     		bne	.L103
+ 523              	.L107:
+ 524 0006 FEE7     		b	.L107
+ 526              		.section	.text.SendNameIndexFloat,"ax",%progbits
+ 527              		.align	2
+ 528              		.global	SendNameIndexFloat
+ 529              		.code 16
+ 530              		.thumb_func
+ 532              	SendNameIndexFloat:
+ 533 0000 0378     		ldrb	r3, [r0]
+ 534              		@ lr needed for prologue
+ 535              	.L109:
+ 536 0002 002B     		cmp	r3, #0
+ 537 0004 FDD1     		bne	.L109
+ 538              	.L113:
+ 539 0006 FEE7     		b	.L113
+ 541              		.section	.text.SendNameSuffixFloat,"ax",%progbits
+ 542              		.align	2
+ 543              		.global	SendNameSuffixFloat
+ 544              		.code 16
+ 545              		.thumb_func
+ 547              	SendNameSuffixFloat:
+ 548 0000 0378     		ldrb	r3, [r0]
+ 549              		@ lr needed for prologue
+ 550              	.L115:
+ 551 0002 002B     		cmp	r3, #0
+ 552 0004 FDD1     		bne	.L115
+ 553              	.L119:
+ 554 0006 FEE7     		b	.L119
+ 556              		.section	.text.SendNameFloat,"ax",%progbits
+ 557              		.align	2
+ 558              		.global	SendNameFloat
+ 559              		.code 16
+ 560              		.thumb_func
+ 562              	SendNameFloat:
+ 563 0000 0378     		ldrb	r3, [r0]
+ 564              		@ lr needed for prologue
+ 565              	.L121:
+ 566 0002 002B     		cmp	r3, #0
+ 567 0004 FDD1     		bne	.L121
+ 568              	.L125:
+ 569 0006 FEE7     		b	.L125
+ 571              		.section	.text.SendNameString,"ax",%progbits
+ 572              		.align	2
+ 573              		.global	SendNameString
+ 574              		.code 16
+ 575              		.thumb_func
+ 577              	SendNameString:
+ 578 0000 0378     		ldrb	r3, [r0]
+ 579              		@ lr needed for prologue
+ 580              	.L127:
+ 581 0002 002B     		cmp	r3, #0
+ 582 0004 FDD1     		bne	.L127
+ 583              	.L131:
+ 584 0006 FEE7     		b	.L131
+ 586              		.section	.text.SendNameSuffixString,"ax",%progbits
+ 587              		.align	2
+ 588              		.global	SendNameSuffixString
+ 589              		.code 16
+ 590              		.thumb_func
+ 592              	SendNameSuffixString:
+ 593 0000 0378     		ldrb	r3, [r0]
+ 594              		@ lr needed for prologue
+ 595              	.L133:
+ 596 0002 002B     		cmp	r3, #0
+ 597 0004 FDD1     		bne	.L133
+ 598              	.L137:
+ 599 0006 FEE7     		b	.L137
+ 601              		.section	.text.SendNameIndexString,"ax",%progbits
+ 602              		.align	2
+ 603              		.global	SendNameIndexString
+ 604              		.code 16
+ 605              		.thumb_func
+ 607              	SendNameIndexString:
+ 608 0000 0378     		ldrb	r3, [r0]
+ 609              		@ lr needed for prologue
+ 610              	.L139:
+ 611 0002 002B     		cmp	r3, #0
+ 612 0004 FDD1     		bne	.L139
+ 613              	.L143:
+ 614 0006 FEE7     		b	.L143
+ 616              		.section	.text.SendCrlf,"ax",%progbits
+ 617              		.align	2
+ 618              		.global	SendCrlf
+ 619              		.code 16
+ 620              		.thumb_func
+ 622              	SendCrlf:
+ 623              		@ lr needed for prologue
+ 624              	.L145:
+ 625 0000 FEE7     		b	.L145
+ 627 0002 C046     		.section	.text.ShowHelp,"ax",%progbits
+ 628              		.align	2
+ 629              		.global	ShowHelp
+ 630              		.code 16
+ 631              		.thumb_func
+ 633              	ShowHelp:
+ 634              		@ lr needed for prologue
+ 635              	.L148:
+ 636 0000 FEE7     		b	.L148
+ 638 0002 C046     		.section	.text.SendHeader,"ax",%progbits
+ 639              		.align	2
+ 640              		.code 16
+ 641              		.thumb_func
+ 643              	SendHeader:
+ 644 0000 00B5     		push	{lr}
+ 645 0002 0022     		mov	r2, #0
+ 646              	.L151:
+ 647 0004 0132     		add	r2, r2, #1
+ 648 0006 431C     		add	r3, r0, #1
+ 649 0008 9A42     		cmp	r2, r3
+ 650 000a FBD1     		bne	.L151
+ 651 000c FFF7FEFF 		bl	SendCrlf
+ 652              		@ sp needed for prologue
+ 653 0010 01BC     		pop	{r0}
+ 654 0012 0047     		bx	r0
+ 656              		.section	.text.SendNameEscapedString,"ax",%progbits
+ 657              		.align	2
+ 658              		.global	SendNameEscapedString
+ 659              		.code 16
+ 660              		.thumb_func
+ 662              	SendNameEscapedString:
+ 663 0000 0378     		ldrb	r3, [r0]
+ 664              		@ lr needed for prologue
+ 665              	.L157:
+ 666 0002 002B     		cmp	r3, #0
+ 667 0004 FDD1     		bne	.L157
+ 668              	.L161:
+ 669 0006 FEE7     		b	.L161
+ 671              		.section	.text.ReadLine,"ax",%progbits
+ 672              		.align	2
+ 673              		.global	ReadLine
+ 674              		.code 16
+ 675              		.thumb_func
+ 677              	ReadLine:
+ 678 0000 30B5     		push	{r4, r5, lr}
+ 679 0002 81B0     		sub	sp, sp, #4
+ 680 0004 0024     		mov	r4, #0
+ 681 0006 12E0     		b	.L178
+ 682              	.L164:
+ 683 0008 6D46     		mov	r5, sp
+ 684 000a 0335     		add	r5, r5, #3
+ 685 000c 281C     		mov	r0, r5
+ 686 000e FFF7FEFF 		bl	vUSBReceiveByte
+ 687 0012 0028     		cmp	r0, #0
+ 688 0014 0BD0     		beq	.L178
+ 689 0016 2878     		ldrb	r0, [r5]
+ 690 0018 0D28     		cmp	r0, #13
+ 691 001a 0CD0     		beq	.L166
+ 692 001c 0828     		cmp	r0, #8
+ 693 001e 03D1     		bne	.L168
+ 694 0020 002C     		cmp	r4, #0
+ 695 0022 04DD     		ble	.L178
+ 696 0024 013C     		sub	r4, r4, #1
+ 697 0026 02E0     		b	.L178
+ 698              	.L168:
+ 699 0028 034B     		ldr	r3, .L179
+ 700 002a 1855     		strb	r0, [r3, r4]
+ 701 002c 0134     		add	r4, r4, #1
+ 702              	.L178:
+ 703 002e FF23     		mov	r3, #255
+ 704 0030 5B00     		lsl	r3, r3, #1
+ 705 0032 9C42     		cmp	r4, r3
+ 706 0034 E8D9     		bls	.L164
+ 707              	.L166:
+ 708              	.L176:
+ 709 0036 FEE7     		b	.L176
+ 710              	.L180:
+ 711              		.align	2
+ 712              	.L179:
+ 713 0038 00000000 		.word	lineBuffer
+ 715              		.section	.rodata.str1.4
+ 716 03b6 0000     		.align	2
+ 717              	.LC36:
+ 718 03b8 2000     		.ascii	" \000"
+ 719 03ba 0000     		.section	.text.processIncomingData,"ax",%progbits
+ 720              		.align	2
+ 721              		.global	processIncomingData
+ 722              		.code 16
+ 723              		.thumb_func
+ 725              	processIncomingData:
+ 726 0000 70B5     		push	{r4, r5, r6, lr}
+ 727 0002 9EB0     		sub	sp, sp, #120
+ 728 0004 FFF7FEFF 		bl	ReadLine
+ 729 0008 0378     		ldrb	r3, [r0]
+ 730 000a 002B     		cmp	r3, #0
+ 731 000c 05D1     		bne	.L182
+ 732 000e FFF7FEFF 		bl	SendCrlf
+ 733 0012 2D20     		mov	r0, #45
+ 734 0014 FFF7FEFF 		bl	SendHeader
+ 735              	.L184:
+ 736 0018 FEE7     		b	.L184
+ 737              	.L182:
+ 738 001a 1649     		ldr	r1, .L200
+ 739 001c FFF7FEFF 		bl	strtok
+ 740 0020 0090     		str	r0, [sp]
+ 741 0022 0026     		mov	r6, #0
+ 742 0024 01AC     		add	r4, sp, #4
+ 743              	.L187:
+ 744 0026 731C     		add	r3, r6, #1
+ 745 0028 1B06     		lsl	r3, r3, #24
+ 746 002a 1249     		ldr	r1, .L200
+ 747 002c 0020     		mov	r0, #0
+ 748 002e 1E0E     		lsr	r6, r3, #24
+ 749 0030 FFF7FEFF 		bl	strtok
+ 750 0034 2060     		str	r0, [r4]
+ 751 0036 1E2E     		cmp	r6, #30
+ 752 0038 02D1     		bne	.L188
+ 753              	.L189:
+ 754 003a 009D     		ldr	r5, [sp]
+ 755 003c 0E4C     		ldr	r4, .L200+4
+ 756 003e 14E0     		b	.L190
+ 757              	.L188:
+ 758 0040 0434     		add	r4, r4, #4
+ 759 0042 0028     		cmp	r0, #0
+ 760 0044 F9D0     		beq	.L189
+ 761 0046 EEE7     		b	.L187
+ 762              	.L191:
+ 763 0048 281C     		mov	r0, r5
+ 764 004a FFF7FEFF 		bl	strcmp
+ 765 004e 0028     		cmp	r0, #0
+ 766 0050 0AD1     		bne	.L192
+ 767 0052 E368     		ldr	r3, [r4, #12]
+ 768 0054 301C     		mov	r0, r6
+ 769 0056 6946     		mov	r1, sp
+ 770 0058 00F03CF8 		bl	.L202
+ 771 005c FFF7FEFF 		bl	SendCrlf
+ 772 0060 2368     		ldr	r3, [r4]
+ 773 0062 002B     		cmp	r3, #0
+ 774 0064 04D0     		beq	.L194
+ 775 0066 04E0     		b	.L195
+ 776              	.L192:
+ 777 0068 1034     		add	r4, r4, #16
+ 778              	.L190:
+ 779 006a 2168     		ldr	r1, [r4]
+ 780 006c 0029     		cmp	r1, #0
+ 781 006e EBD1     		bne	.L191
+ 782              	.L194:
+ 783              	.L199:
+ 784 0070 FEE7     		b	.L199
+ 785              	.L195:
+ 786 0072 FEE7     		b	.L195
+ 787              	.L201:
+ 788              		.align	2
+ 789              	.L200:
+ 790 0074 B8030000 		.word	.LC36
+ 791 0078 00000000 		.word	commands
+ 792              	.L202:
+ 793 007c 1847     		bx	r3
+ 795 007e C046     		.section	.text.procesUsb,"ax",%progbits
+ 796              		.align	2
+ 797              		.global	procesUsb
+ 798              		.code 16
+ 799              		.thumb_func
+ 801              	procesUsb:
+ 802 0000 30B5     		push	{r4, r5, lr}
+ 803 0002 0A4D     		ldr	r5, .L210
+ 804 0004 06E0     		b	.L204
+ 805              	.L205:
+ 806 0006 FFF7FEFF 		bl	strlen
+ 807 000a 2368     		ldr	r3, [r4]
+ 808 000c 9842     		cmp	r0, r3
+ 809 000e 00DD     		ble	.L206
+ 810 0010 2060     		str	r0, [r4]
+ 811              	.L206:
+ 812 0012 1035     		add	r5, r5, #16
+ 813              	.L204:
+ 814 0014 2868     		ldr	r0, [r5]
+ 815 0016 064C     		ldr	r4, .L210+4
+ 816 0018 0028     		cmp	r0, #0
+ 817 001a F4D1     		bne	.L205
+ 818 001c 2368     		ldr	r3, [r4]
+ 819 001e 0133     		add	r3, r3, #1
+ 820 0020 2360     		str	r3, [r4]
+ 821 0022 FFF7FEFF 		bl	processIncomingData
+ 822              		@ sp needed for prologue
+ 823 0026 30BC     		pop	{r4, r5}
+ 824 0028 01BC     		pop	{r0}
+ 825 002a 0047     		bx	r0
+ 826              	.L211:
+ 827              		.align	2
+ 828              	.L210:
+ 829 002c 00000000 		.word	commands
+ 830 0030 00000000 		.word	menuPadding
+ 832              		.section	.bss.lineBuffer,"aw",%nobits
+ 835              	lineBuffer:
+ 836 0000 00000000 		.space	512
+ 836      00000000 
+ 836      00000000 
+ 836      00000000 
+ 836      00000000 
+ 837              		.ident	"GCC: (GNU) 4.0.2"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 usb_comm.c
+     /tmp/cceLjQp5.s:1      .text:0000000000000000 $t
+     /tmp/cceLjQp5.s:8      .rodata.welcomeMsg:0000000000000000 welcomeMsg
+     /tmp/cceLjQp5.s:15     .rodata.cmdPrompt:0000000000000000 cmdPrompt
+     /tmp/cceLjQp5.s:132    .rodata.commands:0000000000000000 commands
+     /tmp/cceLjQp5.s:133    .rodata.commands:0000000000000000 $d
+     /tmp/cceLjQp5.s:197    .bss.menuPadding:0000000000000000 menuPadding
+     /tmp/cceLjQp5.s:205    .text.SendChar:0000000000000000 SendChar
+     /tmp/cceLjQp5.s:202    .text.SendChar:0000000000000000 $t
+     /tmp/cceLjQp5.s:216    .text.SendBytes:0000000000000000 SendBytes
+     /tmp/cceLjQp5.s:213    .text.SendBytes:0000000000000000 $t
+     /tmp/cceLjQp5.s:234    .text.SendString:0000000000000000 SendString
+     /tmp/cceLjQp5.s:231    .text.SendString:0000000000000000 $t
+     /tmp/cceLjQp5.s:249    .text.SendCommandOK:0000000000000000 SendCommandOK
+     /tmp/cceLjQp5.s:246    .text.SendCommandOK:0000000000000000 $t
+     /tmp/cceLjQp5.s:260    .text.SendCommandParamError:0000000000000000 SendCommandParamError
+     /tmp/cceLjQp5.s:257    .text.SendCommandParamError:0000000000000000 $t
+     /tmp/cceLjQp5.s:271    .text.SendInt:0000000000000000 SendInt
+     /tmp/cceLjQp5.s:268    .text.SendInt:0000000000000000 $t
+     /tmp/cceLjQp5.s:293    .text.SendCommandError:0000000000000000 SendCommandError
+     /tmp/cceLjQp5.s:290    .text.SendCommandError:0000000000000000 $t
+     /tmp/cceLjQp5.s:304    .text.SendFloat:0000000000000000 SendFloat
+     /tmp/cceLjQp5.s:301    .text.SendFloat:0000000000000000 $t
+     /tmp/cceLjQp5.s:327    .text.SendDouble:0000000000000000 SendDouble
+     /tmp/cceLjQp5.s:324    .text.SendDouble:0000000000000000 $t
+     /tmp/cceLjQp5.s:351    .text.SendHex:0000000000000000 SendHex
+     /tmp/cceLjQp5.s:348    .text.SendHex:0000000000000000 $t
+     /tmp/cceLjQp5.s:375    .text.SendUint:0000000000000000 SendUint
+     /tmp/cceLjQp5.s:372    .text.SendUint:0000000000000000 $t
+     /tmp/cceLjQp5.s:397    .text.SendNameIndexUint:0000000000000000 SendNameIndexUint
+     /tmp/cceLjQp5.s:394    .text.SendNameIndexUint:0000000000000000 $t
+     /tmp/cceLjQp5.s:412    .text.SendNameSuffixUint:0000000000000000 SendNameSuffixUint
+     /tmp/cceLjQp5.s:409    .text.SendNameSuffixUint:0000000000000000 $t
+     /tmp/cceLjQp5.s:427    .text.SendNameUint:0000000000000000 SendNameUint
+     /tmp/cceLjQp5.s:424    .text.SendNameUint:0000000000000000 $t
+     /tmp/cceLjQp5.s:442    .text.SendNameIndexInt:0000000000000000 SendNameIndexInt
+     /tmp/cceLjQp5.s:439    .text.SendNameIndexInt:0000000000000000 $t
+     /tmp/cceLjQp5.s:457    .text.SendNameSuffixInt:0000000000000000 SendNameSuffixInt
+     /tmp/cceLjQp5.s:454    .text.SendNameSuffixInt:0000000000000000 $t
+     /tmp/cceLjQp5.s:472    .text.SendNameInt:0000000000000000 SendNameInt
+     /tmp/cceLjQp5.s:469    .text.SendNameInt:0000000000000000 $t
+     /tmp/cceLjQp5.s:487    .text.SendNameIndexDouble:0000000000000000 SendNameIndexDouble
+     /tmp/cceLjQp5.s:484    .text.SendNameIndexDouble:0000000000000000 $t
+     /tmp/cceLjQp5.s:502    .text.SendNameSuffixDouble:0000000000000000 SendNameSuffixDouble
+     /tmp/cceLjQp5.s:499    .text.SendNameSuffixDouble:0000000000000000 $t
+     /tmp/cceLjQp5.s:517    .text.SendNameDouble:0000000000000000 SendNameDouble
+     /tmp/cceLjQp5.s:514    .text.SendNameDouble:0000000000000000 $t
+     /tmp/cceLjQp5.s:532    .text.SendNameIndexFloat:0000000000000000 SendNameIndexFloat
+     /tmp/cceLjQp5.s:529    .text.SendNameIndexFloat:0000000000000000 $t
+     /tmp/cceLjQp5.s:547    .text.SendNameSuffixFloat:0000000000000000 SendNameSuffixFloat
+     /tmp/cceLjQp5.s:544    .text.SendNameSuffixFloat:0000000000000000 $t
+     /tmp/cceLjQp5.s:562    .text.SendNameFloat:0000000000000000 SendNameFloat
+     /tmp/cceLjQp5.s:559    .text.SendNameFloat:0000000000000000 $t
+     /tmp/cceLjQp5.s:577    .text.SendNameString:0000000000000000 SendNameString
+     /tmp/cceLjQp5.s:574    .text.SendNameString:0000000000000000 $t
+     /tmp/cceLjQp5.s:592    .text.SendNameSuffixString:0000000000000000 SendNameSuffixString
+     /tmp/cceLjQp5.s:589    .text.SendNameSuffixString:0000000000000000 $t
+     /tmp/cceLjQp5.s:607    .text.SendNameIndexString:0000000000000000 SendNameIndexString
+     /tmp/cceLjQp5.s:604    .text.SendNameIndexString:0000000000000000 $t
+     /tmp/cceLjQp5.s:622    .text.SendCrlf:0000000000000000 SendCrlf
+     /tmp/cceLjQp5.s:619    .text.SendCrlf:0000000000000000 $t
+     /tmp/cceLjQp5.s:633    .text.ShowHelp:0000000000000000 ShowHelp
+     /tmp/cceLjQp5.s:630    .text.ShowHelp:0000000000000000 $t
+     /tmp/cceLjQp5.s:640    .text.SendHeader:0000000000000000 $t
+     /tmp/cceLjQp5.s:643    .text.SendHeader:0000000000000000 SendHeader
+     /tmp/cceLjQp5.s:662    .text.SendNameEscapedString:0000000000000000 SendNameEscapedString
+     /tmp/cceLjQp5.s:659    .text.SendNameEscapedString:0000000000000000 $t
+     /tmp/cceLjQp5.s:677    .text.ReadLine:0000000000000000 ReadLine
+     /tmp/cceLjQp5.s:674    .text.ReadLine:0000000000000000 $t
+     /tmp/cceLjQp5.s:713    .text.ReadLine:0000000000000038 $d
+     /tmp/cceLjQp5.s:835    .bss.lineBuffer:0000000000000000 lineBuffer
+     /tmp/cceLjQp5.s:725    .text.processIncomingData:0000000000000000 processIncomingData
+     /tmp/cceLjQp5.s:722    .text.processIncomingData:0000000000000000 $t
+     /tmp/cceLjQp5.s:790    .text.processIncomingData:0000000000000074 $d
+     /tmp/cceLjQp5.s:793    .text.processIncomingData:000000000000007c $t
+     /tmp/cceLjQp5.s:801    .text.procesUsb:0000000000000000 procesUsb
+     /tmp/cceLjQp5.s:798    .text.procesUsb:0000000000000000 $t
+     /tmp/cceLjQp5.s:829    .text.procesUsb:000000000000002c $d
+
+UNDEFINED SYMBOLS
+getFreeMem
+getRuntime
+getDebug
+setIgnitionCell
+setIgnitionRPMBin
+setIgnitionLoadBin
+getEngineConfig
+getRpmBins
+getLoadBins
+getIgnMap
+getUserOutCfg
+enableLockedAdvance
+disableLockedAdvance
+modp_itoa10
+modp_ftoa
+modp_dtoa
+modp_itoaX
+modp_uitoa10
+vUSBReceiveByte
+strtok
+strcmp
+strlen
