@@ -5625,15 +5625,11 @@ Please make sure your boards conform to these design rules.</description>
 <signal name="VREF">
 <contactref element="U$1" pad="P15"/>
 <contactref element="D2" pad="C"/>
-<wire x1="77.724" y1="55.354" x2="77.724" y2="54.102" width="0.8128" layer="1"/>
-<wire x1="77.724" y1="54.102" x2="76.454" y2="52.832" width="0.8128" layer="1"/>
-<wire x1="76.454" y1="52.832" x2="76.454" y2="49.276" width="0.8128" layer="1"/>
-<wire x1="76.454" y1="49.276" x2="76.708" y2="49.022" width="0.8128" layer="1"/>
-<via x="76.708" y="49.022" extent="1-16" drill="0.3302"/>
-<wire x1="76.708" y1="49.022" x2="76.708" y2="15.748" width="0.8128" layer="16"/>
-<wire x1="76.708" y1="15.748" x2="74.676" y2="13.716" width="0.8128" layer="16"/>
-<wire x1="74.676" y1="13.716" x2="70.884" y2="13.716" width="0.8128" layer="16"/>
 <wire x1="70.884" y1="13.716" x2="70.866" y2="13.698" width="0.8128" layer="16"/>
+<wire x1="77.724" y1="55.354" x2="77.724" y2="54.61" width="0.8128" layer="1"/>
+<wire x1="77.724" y1="54.61" x2="75.692" y2="52.578" width="0.8128" layer="1"/>
+<wire x1="75.692" y1="52.578" x2="75.692" y2="18.524" width="0.8128" layer="1"/>
+<wire x1="75.692" y1="18.524" x2="70.866" y2="13.698" width="0.8128" layer="1"/>
 </signal>
 <signal name="+3V3">
 <contactref element="IC1" pad="12"/>
@@ -6229,7 +6225,11 @@ Please make sure your boards conform to these design rules.</description>
 <via x="43.688" y="22.606" extent="1-16" drill="0.3302"/>
 <wire x1="43.688" y1="22.606" x2="43.688" y2="17.78" width="0.254" layer="16"/>
 <via x="43.688" y="17.78" extent="1-16" drill="0.3302"/>
-<wire x1="43.688" y1="17.78" x2="34.29" y2="17.78" width="0.254" layer="15"/>
+<wire x1="43.688" y1="17.78" x2="39.116" y2="17.78" width="0.254" layer="15"/>
+<wire x1="39.116" y1="17.78" x2="38.608" y2="18.288" width="0.254" layer="15"/>
+<wire x1="38.608" y1="18.288" x2="37.338" y2="18.288" width="0.254" layer="15"/>
+<wire x1="37.338" y1="18.288" x2="36.83" y2="17.78" width="0.254" layer="15"/>
+<wire x1="36.83" y1="17.78" x2="34.29" y2="17.78" width="0.254" layer="15"/>
 <wire x1="34.29" y1="17.78" x2="31.75" y2="15.24" width="0.254" layer="15"/>
 <via x="31.75" y="15.24" extent="1-16" drill="0.3302"/>
 <wire x1="31.75" y1="15.24" x2="31.75" y2="16.129" width="0.254" layer="1"/>
