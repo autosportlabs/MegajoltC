@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="12" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="15" fill="1" visible="no" active="no"/>
@@ -22378,7 +22378,6 @@ at 30/07/2012 11:22:31</description>
 <part name="GND18" library="supply1" deviceset="GND" device=""/>
 <part name="P+4" library="supply1" deviceset="+5V" device=""/>
 <part name="P+7" library="supply2" deviceset="V+" device="" value="VREF"/>
-<part name="D2" library="diode" deviceset="SCHOTTKY-DIODE" device="SMC"/>
 <part name="C1" library="rcl" deviceset="CPOL-US" device="SMCA" value="10uF"/>
 <part name="GND12" library="supply1" deviceset="GND" device=""/>
 <part name="IC2" library="linear" deviceset="LM340S" device="" value="MCP1826"/>
@@ -22398,6 +22397,7 @@ at 30/07/2012 11:22:31</description>
 <part name="D4" library="diode" deviceset="PESD1CAN" device=""/>
 <part name="GND19" library="supply1" deviceset="GND" device=""/>
 <part name="R8" library="rcl" deviceset="R-US_" device="R0603" value="10k"/>
+<part name="D2" library="smt_diodes" deviceset="SCHOTTKY" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -22966,9 +22966,9 @@ at 30/07/2012 11:22:31</description>
 <label x="-231.14" y="226.06" size="0.8128" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$9" gate="G$1" pin="P1.3"/>
-<wire x1="-134.62" y1="129.54" x2="-132.08" y2="129.54" width="0.1524" layer="91"/>
-<label x="-132.08" y="129.54" size="0.8128" layer="95" xref="yes"/>
+<pinref part="U$9" gate="G$1" pin="P1.2"/>
+<wire x1="-134.62" y1="132.08" x2="-132.08" y2="132.08" width="0.1524" layer="91"/>
+<label x="-132.08" y="132.08" size="0.8128" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$24" class="0">
@@ -23155,11 +23155,6 @@ at 30/07/2012 11:22:31</description>
 </segment>
 </net>
 <net name="CAN_TX" class="0">
-<segment>
-<pinref part="U$9" gate="G$1" pin="P2.0"/>
-<wire x1="-200.66" y1="170.18" x2="-203.2" y2="170.18" width="0.1524" layer="91"/>
-<label x="-203.2" y="170.18" size="0.8128" layer="95" rot="R180" xref="yes"/>
-</segment>
 <segment>
 <pinref part="U$9" gate="G$1" pin="P2.7"/>
 <wire x1="-200.66" y1="152.4" x2="-203.2" y2="152.4" width="0.1524" layer="91"/>
@@ -23453,6 +23448,18 @@ at 30/07/2012 11:22:31</description>
 <pinref part="U$9" gate="G$1" pin="P2.8"/>
 <wire x1="-200.66" y1="149.86" x2="-203.2" y2="149.86" width="0.1524" layer="91"/>
 <label x="-203.2" y="149.86" size="0.8128" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="ESP_GPIO2" class="0">
+<segment>
+<pinref part="U$2" gate="G$1" pin="GPIO2"/>
+<wire x1="-233.68" y1="223.52" x2="-231.14" y2="223.52" width="0.1524" layer="91"/>
+<label x="-231.14" y="223.52" size="0.8128" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U$9" gate="G$1" pin="P1.3"/>
+<wire x1="-134.62" y1="129.54" x2="-132.08" y2="129.54" width="0.1524" layer="91"/>
+<label x="-132.08" y="129.54" size="0.8128" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
@@ -24162,7 +24169,6 @@ at 30/07/2012 11:22:31</description>
 <instance part="VDD5" gate="G$1" x="264.16" y="154.94"/>
 <instance part="P+4" gate="1" x="304.8" y="160.02"/>
 <instance part="P+7" gate="1" x="335.28" y="160.02"/>
-<instance part="D2" gate="G$1" x="327.66" y="147.32"/>
 <instance part="C1" gate="G$1" x="248.92" y="185.42" smashed="yes">
 <attribute name="NAME" x="249.936" y="186.055" size="1.778" layer="95"/>
 <attribute name="VALUE" x="249.936" y="181.229" size="1.778" layer="96"/>
@@ -24175,6 +24181,9 @@ at 30/07/2012 11:22:31</description>
 </instance>
 <instance part="VDD3" gate="G$1" x="208.28" y="200.66"/>
 <instance part="P+3" gate="VCC" x="248.92" y="205.74"/>
+<instance part="D2" gate="G$1" x="327.66" y="147.32" smashed="yes">
+<attribute name="NAME" x="327.5584" y="151.9936" size="1.778" layer="95" rot="R90"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -24435,10 +24444,10 @@ at 30/07/2012 11:22:31</description>
 </net>
 <net name="VREF" class="0">
 <segment>
-<pinref part="D2" gate="G$1" pin="C"/>
 <pinref part="P+7" gate="1" pin="V+"/>
 <wire x1="330.2" y1="147.32" x2="335.28" y2="147.32" width="0.1524" layer="91"/>
 <wire x1="335.28" y1="147.32" x2="335.28" y2="157.48" width="0.1524" layer="91"/>
+<pinref part="D2" gate="G$1" pin="C"/>
 </segment>
 </net>
 <net name="VCC" class="0">
