@@ -2129,6 +2129,14 @@
 <rectangle x1="1.8796" y1="57.8866" x2="4.2926" y2="60.1726" layer="21"/>
 <wire x1="43.688" y1="61.468" x2="43.434" y2="61.468" width="0.254" layer="25"/>
 <wire x1="43.434" y1="61.468" x2="43.434" y2="60.452" width="0.254" layer="25"/>
+<circle x="5.969" y="58.674" radius="0.508" width="0" layer="1"/>
+<circle x="5.969" y="58.674" radius="1.016" width="0" layer="29"/>
+<circle x="70.739" y="58.928" radius="0.508" width="0" layer="1"/>
+<circle x="70.739" y="58.928" radius="1.016" width="0" layer="29"/>
+<circle x="75.311" y="4.826" radius="0.508" width="0" layer="1"/>
+<circle x="75.311" y="4.826" radius="1.016" width="0" layer="29"/>
+<circle x="1.143" y="7.62" radius="0.508" width="0" layer="1"/>
+<circle x="1.143" y="7.62" radius="1.016" width="0" layer="29"/>
 </plain>
 <libraries>
 <library name="rcl">
