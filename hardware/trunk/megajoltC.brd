@@ -4585,8 +4585,8 @@ Please make sure your boards conform to these design rules.</description>
 <element name="D1" library="smt_diodes" package="SMA" value="SCHOTTKY" x="13.208" y="30.48" smashed="yes" rot="R180">
 <attribute name="NAME" x="12.811" y="29.999" size="0.4064" layer="25" ratio="10" rot="R90"/>
 </element>
-<element name="X1" library="cnkls_parts" package="MINI-USB_JACK" value="MINI_USB_SHIELD" x="3.175" y="29.972" smashed="yes">
-<attribute name="NAME" x="4.3942" y="25.8064" size="0.4064" layer="25" rot="R180"/>
+<element name="X1" library="cnkls_parts" package="MINI-USB_JACK" value="MINI_USB_SHIELD" x="2.921" y="29.972" smashed="yes">
+<attribute name="NAME" x="4.1402" y="25.8064" size="0.4064" layer="25" rot="R180"/>
 </element>
 <element name="C41" library="rcl" package="153CLV-0605" value="22uF" x="37.1348" y="55.4736" smashed="yes" rot="R90">
 <attribute name="NAME" x="36.0308" y="55.0396" size="0.4064" layer="25"/>
@@ -5246,7 +5246,7 @@ Please make sure your boards conform to these design rules.</description>
 <via x="59.69" y="8.382" extent="1-16" drill="0.3302"/>
 <via x="60.96" y="8.382" extent="1-16" drill="0.3302"/>
 <via x="58.42" y="13.716" extent="1-16" drill="0.3302"/>
-<wire x1="6.695" y1="29.172" x2="6.625" y2="34.172" width="0" layer="19" extent="1-1"/>
+<wire x1="6.441" y1="29.172" x2="6.371" y2="34.172" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="+5V">
 <contactref element="D1" pad="C"/>
@@ -5326,7 +5326,7 @@ Please make sure your boards conform to these design rules.</description>
 <contactref element="D1" pad="A"/>
 <contactref element="X1" pad="1"/>
 <contactref element="R4" pad="2"/>
-<wire x1="6.695" y1="31.572" x2="10.066" y2="31.572" width="0.6096" layer="1"/>
+<wire x1="6.441" y1="31.572" x2="10.066" y2="31.572" width="0.6096" layer="1"/>
 <wire x1="10.066" y1="31.572" x2="11.158" y2="30.48" width="0.6096" layer="1"/>
 <wire x1="11.158" y1="30.48" x2="11.158" y2="28.744" width="0.6096" layer="1"/>
 <wire x1="11.158" y1="28.744" x2="11.835" y2="28.067" width="0.6096" layer="1"/>
@@ -5927,7 +5927,7 @@ Please make sure your boards conform to these design rules.</description>
 <contactref element="R1" pad="1"/>
 <contactref element="C3" pad="1"/>
 <wire x1="18.454" y1="33.782" x2="18.454" y2="31.75" width="0.254" layer="1"/>
-<wire x1="6.695" y1="30.772" x2="9.36" y2="30.772" width="0.254" layer="1"/>
+<wire x1="6.441" y1="30.772" x2="9.36" y2="30.772" width="0.254" layer="1"/>
 <wire x1="9.36" y1="30.772" x2="9.398" y2="30.734" width="0.254" layer="1"/>
 <via x="9.398" y="30.734" extent="1-16" drill="0.3556"/>
 <wire x1="9.398" y1="30.734" x2="16.256" y2="30.734" width="0.254" layer="16"/>
@@ -5941,7 +5941,7 @@ Please make sure your boards conform to these design rules.</description>
 <contactref element="R3" pad="1"/>
 <contactref element="C4" pad="1"/>
 <wire x1="18.454" y1="27.686" x2="18.454" y2="29.718" width="0.254" layer="1"/>
-<wire x1="6.695" y1="29.972" x2="9.144" y2="29.972" width="0.254" layer="1"/>
+<wire x1="6.441" y1="29.972" x2="9.144" y2="29.972" width="0.254" layer="1"/>
 <wire x1="9.144" y1="29.972" x2="9.398" y2="29.718" width="0.254" layer="1"/>
 <via x="9.398" y="29.718" extent="1-16" drill="0.3556"/>
 <wire x1="9.398" y1="29.718" x2="17.018" y2="29.718" width="0.254" layer="16"/>
