@@ -22203,7 +22203,6 @@ at 30/07/2012 11:22:31</description>
 <part name="D1" library="smt_diodes" deviceset="SCHOTTKY" device=""/>
 <part name="X1" library="cnkls_parts" deviceset="MINI_USB_SHIELD" device=""/>
 <part name="FRAME1" library="frames" deviceset="FRAME_B_L" device=""/>
-<part name="R13" library="rcl" deviceset="R-US_" device="R0603" value="1K"/>
 <part name="U4" library="power_mosfets" deviceset="ZXMS6004FF" device=""/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
 <part name="FRAME2" library="frames" deviceset="FRAME_B_L" device=""/>
@@ -22306,7 +22305,6 @@ at 30/07/2012 11:22:31</description>
 <part name="RN1" library="resistor-dil" deviceset="4R-N" device="0603-ARC" value="5.6K"/>
 <part name="RN2" library="resistor-dil" deviceset="4R-N" device="0603-ARC" value="10K"/>
 <part name="CN2" library="cap_array" deviceset="CAP_ARRAY_4" device="1206_ARRAY" value=""/>
-<part name="P+6" library="supply1" deviceset="+12V" device=""/>
 <part name="P+8" library="supply1" deviceset="+12V" device=""/>
 <part name="U18" library="can" deviceset="MCP2551" device="SO8"/>
 <part name="C21" library="rcl" deviceset="C-US" device="C0603K" value="0.1uF"/>
@@ -23469,10 +23467,6 @@ at 30/07/2012 11:22:31</description>
 <text x="124.46" y="-20.32" size="3.81" layer="97" ratio="5">Input / Output conditioning</text>
 </plain>
 <instances>
-<instance part="R13" gate="G$1" x="-22.86" y="101.6" smashed="yes" rot="R90">
-<attribute name="NAME" x="-24.384" y="103.1494" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="-24.13" y="100.584" size="1.778" layer="96" rot="R180"/>
-</instance>
 <instance part="U4" gate="G$1" x="-38.1" y="88.9" smashed="yes">
 <attribute name="NAME" x="-49.53" y="99.06" size="1.778" layer="95"/>
 <attribute name="VALUE" x="-49.53" y="96.52" size="1.778" layer="96"/>
@@ -23527,7 +23521,6 @@ at 30/07/2012 11:22:31</description>
 <instance part="GND10" gate="1" x="-127" y="106.68" smashed="yes">
 <attribute name="VALUE" x="-129.54" y="104.14" size="1.778" layer="96"/>
 </instance>
-<instance part="P+6" gate="1" x="-22.86" y="119.38"/>
 <instance part="P+8" gate="1" x="38.1" y="119.38"/>
 <instance part="U$6" gate="G$1" x="-137.16" y="111.76" rot="R90"/>
 <instance part="U$6" gate="G$2" x="-137.16" y="99.06" rot="R90"/>
@@ -23594,21 +23587,12 @@ at 30/07/2012 11:22:31</description>
 </net>
 <net name="PGM_OUT" class="0">
 <segment>
-<wire x1="-30.48" y1="93.98" x2="-22.86" y2="93.98" width="0.1524" layer="91"/>
-<wire x1="-22.86" y1="96.52" x2="-22.86" y2="93.98" width="0.1524" layer="91"/>
-<wire x1="-22.86" y1="93.98" x2="-17.78" y2="93.98" width="0.1524" layer="91"/>
-<junction x="-22.86" y="93.98"/>
-<pinref part="R13" gate="G$1" pin="1"/>
+<wire x1="-30.48" y1="93.98" x2="-17.78" y2="93.98" width="0.1524" layer="91"/>
 <pinref part="U4" gate="G$1" pin="D1"/>
 <label x="-17.78" y="93.98" size="0.8128" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="SAFE_+12V" class="0">
-<segment>
-<pinref part="R13" gate="G$1" pin="2"/>
-<pinref part="P+6" gate="1" pin="+12V"/>
-<wire x1="-22.86" y1="106.68" x2="-22.86" y2="116.84" width="0.1524" layer="91"/>
-</segment>
 <segment>
 <pinref part="R36" gate="G$1" pin="2"/>
 <pinref part="P+8" gate="1" pin="+12V"/>
